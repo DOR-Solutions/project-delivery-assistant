@@ -1,0 +1,32 @@
+{
+  "name": "project-delivery-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered virtual assistant for project delivery management",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:server": "pnpm --filter server dev",
+    "dev:client": "pnpm --filter client dev",
+    "build": "pnpm --filter client build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "start": "pnpm --filter server start"
+  },
+  "keywords": [
+    "project-management",
+    "ai-assistant",
+    "delivery"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
