@@ -3,8 +3,15 @@ import ProjectList from './components/ProjectList.jsx';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SESSION_KEY = 'project-delivery-assistant-session';
 
-const initialForm = {
+const initialAuthForm = {
+  name: '',
+  email: '',
+  password: '',
+};
+
+const initialProjectForm = {
   title: '',
   owner: '',
   status: 'not-started',
@@ -13,10 +20,22 @@ const initialForm = {
   tasks: '',
 };
 
+function loadSavedSession() {
+  try {
+    const savedSession = window.localStorage.getItem(SESSION_KEY);
+    return savedSession ? JSON.parse(savedSession) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function App() {
+  const [session, setSession] = useState(loadSavedSession);
+  const [authMode, setAuthMode] = useState('login');
+  const [authForm, setAuthForm] = useState(initialAuthForm);
   const [projects, setProjects] = useState([]);
-  const [form, setForm] = useState(initialForm);
-  const [loading, setLoading] = useState(true);
+  const [projectForm, setProjectForm] = useState(initialProjectForm);
+  const [loading, setLoading] = useState(Boolean(session));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,14 +47,30 @@ function App() {
     return { total, completed, blocked };
   }, [projects]);
 
+  function authHeaders() {
+    return {
+      Authorization: `Bearer ${session.token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
   async function loadProjects() {
+    if (!session) {
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/projects`);
+      const response = await fetch(`${API_URL}/api/projects`, {
+        headers: authHeaders(),
+      });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+        }
         throw new Error('Unable to load projects');
       }
 
@@ -49,12 +84,57 @@ function App() {
   }
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    if (session) {
+      loadProjects();
+    }
+  }, [session]);
 
-  function updateField(event) {
+  function updateProjectField(event) {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setProjectForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateAuthField(event) {
+    const { name, value } = event.target;
+    setAuthForm((current) => ({ ...current, [name]: value }));
+  }
+
+  async function submitAuth(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    try {
+      const endpoint = authMode === 'login' ? 'login' : 'register';
+      const response = await fetch(`${API_URL}/api/auth/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(authForm),
+      });
+
+      const body = await response.json();
+
+      if (!response.ok) {
+        throw new Error(body.error || 'Unable to authenticate');
+      }
+
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(body));
+      setSession(body);
+      setAuthForm(initialAuthForm);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function logout() {
+    window.localStorage.removeItem(SESSION_KEY);
+    setSession(null);
+    setProjects([]);
+    setLoading(false);
   }
 
   async function createProject(event) {
@@ -63,18 +143,16 @@ function App() {
     setError('');
 
     try {
-      const tasks = form.tasks
+      const tasks = projectForm.tasks
         .split('\n')
         .map((title) => ({ title }))
         .filter((task) => task.title.trim());
 
       const response = await fetch(`${API_URL}/api/projects`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
-          ...form,
+          ...projectForm,
           tasks,
         }),
       });
@@ -86,7 +164,7 @@ function App() {
 
       const project = await response.json();
       setProjects((current) => [project, ...current]);
-      setForm(initialForm);
+      setProjectForm(initialProjectForm);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -100,9 +178,7 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/api/projects/${project.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ ...project, status }),
       });
 
@@ -126,6 +202,7 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       });
 
       if (!response.ok) {
@@ -139,6 +216,92 @@ function App() {
     }
   }
 
+  if (!session) {
+    return (
+      <div className="app-shell auth-layout">
+        <section className="auth-hero">
+          <p className="eyebrow">Team workspace</p>
+          <h1>Project Delivery Assistant</h1>
+          <p>
+            Sign in to manage your delivery pipeline, track tasks, and keep each
+            user's projects separate.
+          </p>
+        </section>
+
+        <section className="panel auth-panel">
+          <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
+            <button
+              className={authMode === 'login' ? 'active' : ''}
+              onClick={() => setAuthMode('login')}
+              type="button"
+            >
+              Log in
+            </button>
+            <button
+              className={authMode === 'register' ? 'active' : ''}
+              onClick={() => setAuthMode('register')}
+              type="button"
+            >
+              Create account
+            </button>
+          </div>
+
+          {error && <div className="alert inline-alert">{error}</div>}
+
+          <form className="project-form" onSubmit={submitAuth}>
+            {authMode === 'register' && (
+              <label>
+                Name
+                <input
+                  autoComplete="name"
+                  name="name"
+                  onChange={updateAuthField}
+                  placeholder="Jordan Lee"
+                  value={authForm.name}
+                />
+              </label>
+            )}
+
+            <label>
+              Email
+              <input
+                autoComplete="email"
+                name="email"
+                onChange={updateAuthField}
+                placeholder="you@example.com"
+                required
+                type="email"
+                value={authForm.email}
+              />
+            </label>
+
+            <label>
+              Password
+              <input
+                autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+                minLength="8"
+                name="password"
+                onChange={updateAuthField}
+                placeholder="At least 8 characters"
+                required
+                type="password"
+                value={authForm.password}
+              />
+            </label>
+
+            <button type="submit" disabled={saving}>
+              {saving
+                ? 'Please wait...'
+                : authMode === 'login'
+                  ? 'Log in'
+                  : 'Create account'}
+            </button>
+          </form>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="hero">
@@ -147,21 +310,27 @@ function App() {
           <h1>Project Delivery Assistant</h1>
           <p>
             Track ownership, milestones, and risk signals for active delivery work.
+            Signed in as {session.user.name || session.user.email}.
           </p>
         </div>
-        <div className="stats-grid" aria-label="Project summary">
-          <div>
-            <span>{projectStats.total}</span>
-            <small>Total projects</small>
+        <div className="hero-side">
+          <div className="stats-grid" aria-label="Project summary">
+            <div>
+              <span>{projectStats.total}</span>
+              <small>Total projects</small>
+            </div>
+            <div>
+              <span>{projectStats.completed}</span>
+              <small>Completed</small>
+            </div>
+            <div>
+              <span>{projectStats.blocked}</span>
+              <small>Blocked</small>
+            </div>
           </div>
-          <div>
-            <span>{projectStats.completed}</span>
-            <small>Completed</small>
-          </div>
-          <div>
-            <span>{projectStats.blocked}</span>
-            <small>Blocked</small>
-          </div>
+          <button className="logout-button" onClick={logout} type="button">
+            Log out
+          </button>
         </div>
       </header>
 
@@ -175,8 +344,8 @@ function App() {
               Project title
               <input
                 name="title"
-                value={form.title}
-                onChange={updateField}
+                value={projectForm.title}
+                onChange={updateProjectField}
                 placeholder="Client portal launch"
                 required
               />
@@ -186,8 +355,8 @@ function App() {
               Owner
               <input
                 name="owner"
-                value={form.owner}
-                onChange={updateField}
+                value={projectForm.owner}
+                onChange={updateProjectField}
                 placeholder="Delivery lead"
               />
             </label>
@@ -195,7 +364,11 @@ function App() {
             <div className="form-row">
               <label>
                 Status
-                <select name="status" value={form.status} onChange={updateField}>
+                <select
+                  name="status"
+                  value={projectForm.status}
+                  onChange={updateProjectField}
+                >
                   <option value="not-started">Not started</option>
                   <option value="in-progress">In progress</option>
                   <option value="blocked">Blocked</option>
@@ -208,8 +381,8 @@ function App() {
                 <input
                   name="dueDate"
                   type="date"
-                  value={form.dueDate}
-                  onChange={updateField}
+                  value={projectForm.dueDate}
+                  onChange={updateProjectField}
                 />
               </label>
             </div>
@@ -218,8 +391,8 @@ function App() {
               Description
               <textarea
                 name="description"
-                value={form.description}
-                onChange={updateField}
+                value={projectForm.description}
+                onChange={updateProjectField}
                 placeholder="What needs to be delivered?"
                 rows="4"
               />
@@ -229,8 +402,8 @@ function App() {
               Tasks
               <textarea
                 name="tasks"
-                value={form.tasks}
-                onChange={updateField}
+                value={projectForm.tasks}
+                onChange={updateProjectField}
                 placeholder={'One task per line\nConfirm scope\nSchedule kickoff'}
                 rows="4"
               />

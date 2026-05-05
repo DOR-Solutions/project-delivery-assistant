@@ -8,6 +8,7 @@ const dataFile = path.join(dataDirectory, 'projects.json');
 const initialProjects = [
   {
     id: 'sample-discovery',
+    userId: 'demo-user',
     title: 'Discovery workshop',
     description: 'Align stakeholders on scope, goals, and delivery risks.',
     status: 'in-progress',
@@ -84,21 +85,26 @@ function validateProjectPayload(payload) {
   };
 }
 
-async function listProjects() {
+async function listProjects(userId) {
   const projects = await readProjects();
-  return projects.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  return projects
+    .filter((project) => project.userId === userId)
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }
 
-async function getProject(id) {
+async function getProject(id, userId) {
   const projects = await readProjects();
-  return projects.find((project) => project.id === id) || null;
+  return (
+    projects.find((project) => project.id === id && project.userId === userId) || null
+  );
 }
 
-async function createProject(payload) {
+async function createProject(payload, userId) {
   const now = new Date().toISOString();
   const projects = await readProjects();
   const project = {
     id: createId(),
+    userId,
     ...validateProjectPayload(payload),
     createdAt: now,
     updatedAt: now,
@@ -109,9 +115,11 @@ async function createProject(payload) {
   return project;
 }
 
-async function updateProject(id, payload) {
+async function updateProject(id, payload, userId) {
   const projects = await readProjects();
-  const index = projects.findIndex((project) => project.id === id);
+  const index = projects.findIndex(
+    (project) => project.id === id && project.userId === userId
+  );
 
   if (index === -1) {
     return null;
@@ -131,9 +139,11 @@ async function updateProject(id, payload) {
   return nextProject;
 }
 
-async function deleteProject(id) {
+async function deleteProject(id, userId) {
   const projects = await readProjects();
-  const nextProjects = projects.filter((project) => project.id !== id);
+  const nextProjects = projects.filter(
+    (project) => project.id !== id || project.userId !== userId
+  );
 
   if (nextProjects.length === projects.length) {
     return false;

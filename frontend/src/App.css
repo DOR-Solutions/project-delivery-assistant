@@ -20,6 +20,69 @@ button {
   cursor: pointer;
 }
 
+.auth-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.auth-card {
+  margin: 0 auto;
+  max-width: 440px;
+  width: 100%;
+}
+
+.auth-card h1 {
+  margin: 8px 0;
+}
+
+.auth-card form {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.auth-card label {
+  color: #344054;
+  display: grid;
+  font-size: 0.9rem;
+  font-weight: 700;
+  gap: 7px;
+}
+
+.auth-card input {
+  border: 1px solid #c9d6e4;
+  border-radius: 10px;
+  color: #172033;
+  padding: 11px 12px;
+}
+
+.auth-card button,
+.sign-out-button {
+  border: 0;
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 10px 16px;
+}
+
+.auth-card button {
+  background: #1f7bd8;
+  color: #fff;
+}
+
+.auth-switch {
+  margin-top: 16px;
+}
+
+.link-button {
+  background: transparent;
+  border: 0;
+  color: #125a9f;
+  font-weight: 800;
+  padding: 0;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -32,6 +95,18 @@ button {
   gap: 28px;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
   padding: 48px max(24px, calc((100vw - 1100px) / 2));
+}
+
+.hero-topline {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.sign-out-button {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .eyebrow {

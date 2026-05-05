@@ -1,6 +1,7 @@
 const cors = require('cors');
 const dotenv = require('dotenv');
 const express = require('express');
+const authRouter = require('./routes/auth');
 const projectsRouter = require('./routes/projects');
 
 dotenv.config();
@@ -19,6 +20,7 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/projects', projectsRouter);
 
 app.use((req, res) => {
