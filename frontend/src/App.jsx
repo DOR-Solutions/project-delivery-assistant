@@ -43,8 +43,12 @@ function App() {
     const total = projects.length;
     const completed = projects.filter((project) => project.status === 'complete').length;
     const blocked = projects.filter((project) => project.status === 'blocked').length;
+    const taskCount = projects.reduce(
+      (count, project) => count + project.tasks.length,
+      0
+    );
 
-    return { total, completed, blocked };
+    return { total, completed, blocked, taskCount };
   }, [projects]);
 
   function authHeaders() {
@@ -172,14 +176,14 @@ function App() {
     }
   }
 
-  async function changeStatus(project, status) {
+  async function saveProject(project, updates) {
     setError('');
 
     try {
       const response = await fetch(`${API_URL}/api/projects/${project.id}`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ ...project, status }),
+        body: JSON.stringify({ ...project, ...updates }),
       });
 
       if (!response.ok) {
@@ -191,9 +195,45 @@ function App() {
       setProjects((current) =>
         current.map((item) => (item.id === updatedProject.id ? updatedProject : item))
       );
+      return updatedProject;
     } catch (requestError) {
       setError(requestError.message);
+      return null;
     }
+  }
+
+  async function changeStatus(project, status) {
+    await saveProject(project, { status });
+  }
+
+  async function updateProjectDetails(project, details) {
+    return saveProject(project, details);
+  }
+
+  async function addTask(project, title) {
+    const nextTaskTitle = title.trim();
+
+    if (!nextTaskTitle) {
+      return null;
+    }
+
+    return saveProject(project, {
+      tasks: [...project.tasks, { title: nextTaskTitle, completed: false }],
+    });
+  }
+
+  async function toggleTask(project, taskId) {
+    return saveProject(project, {
+      tasks: project.tasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      ),
+    });
+  }
+
+  async function deleteTask(project, taskId) {
+    return saveProject(project, {
+      tasks: project.tasks.filter((task) => task.id !== taskId),
+    });
   }
 
   async function removeProject(projectId) {
@@ -327,6 +367,10 @@ function App() {
               <span>{projectStats.blocked}</span>
               <small>Blocked</small>
             </div>
+            <div>
+              <span>{projectStats.taskCount}</span>
+              <small>Tasks tracked</small>
+            </div>
           </div>
           <button className="logout-button" onClick={logout} type="button">
             Log out
@@ -419,8 +463,12 @@ function App() {
           <ProjectList
             loading={loading}
             projects={projects}
+            onAddTask={addTask}
             onDelete={removeProject}
+            onDeleteTask={deleteTask}
+            onEdit={updateProjectDetails}
             onStatusChange={changeStatus}
+            onToggleTask={toggleTask}
           />
         </section>
       </main>

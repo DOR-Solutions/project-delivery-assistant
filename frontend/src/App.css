@@ -196,7 +196,11 @@ button {
 .project-form input,
 .project-form select,
 .project-form textarea,
-.card-actions select {
+.card-actions select,
+.edit-form input,
+.edit-form select,
+.edit-form textarea,
+.task-form input {
   border: 1px solid #c9d6e4;
   border-radius: 10px;
   color: #172033;
@@ -208,6 +212,11 @@ button {
   resize: vertical;
 }
 
+.edit-form textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
 .form-row {
   display: grid;
   gap: 12px;
@@ -215,6 +224,9 @@ button {
 }
 
 .project-form button,
+.primary-button,
+.secondary-button,
+.ghost-button,
 .danger-button {
   border: 0;
   border-radius: 999px;
@@ -225,6 +237,21 @@ button {
 .project-form button {
   background: #1f7bd8;
   color: #fff;
+}
+
+.primary-button {
+  background: #1f7bd8;
+  color: #fff;
+}
+
+.secondary-button {
+  background: #e8f2ff;
+  color: #125a9f;
+}
+
+.ghost-button {
+  background: transparent;
+  color: #125a9f;
 }
 
 .project-form button:disabled {
@@ -244,6 +271,10 @@ button {
 
 .project-card {
   padding: 20px;
+}
+
+.project-card.editing {
+  border-color: #1f7bd8;
 }
 
 .card-header {
@@ -301,23 +332,77 @@ button {
 }
 
 .tasks {
+  display: grid;
+  gap: 8px;
+  list-style: none;
   margin: 18px 0;
-  padding-left: 20px;
+  padding-left: 0;
 }
 
 .tasks li {
-  margin-bottom: 6px;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
 }
 
-.tasks li.done {
+.task-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #344054;
+  display: inline-flex;
+  gap: 8px;
+  padding: 0;
+  text-align: left;
+}
+
+.task-toggle span:first-child {
+  align-items: center;
+  border: 1px solid #9fb4cc;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 22px;
+  justify-content: center;
+  min-width: 22px;
+}
+
+.tasks li.done .task-toggle {
   color: #067647;
   text-decoration: line-through;
+}
+
+.task-delete-button {
+  background: transparent;
+  border: 0;
+  color: #b42318;
+  font-weight: 800;
 }
 
 .card-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.edit-form {
+  display: grid;
+  gap: 12px;
+}
+
+.task-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.task-form input {
+  flex: 1;
+}
+
+.empty-tasks {
+  color: #66768a;
+  margin: 18px 0;
 }
 
 .empty-state,
