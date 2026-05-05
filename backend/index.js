@@ -1,13 +1,41 @@
+const cors = require('cors');
+const dotenv = require('dotenv');
 const express = require('express');
-const mongoose = require('mongoose');
+const projectsRouter = require('./routes/projects');
+
+dotenv.config();
+
 const app = express();
-
-app.use(express.json());
-
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => app.listen(PORT, () => {  
-    console.log(`Server is running on port ${PORT}`);
-  }))
-  .catch(err => console.log(err));
+app.use(cors());
+app.use(express.json());
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'project-delivery-assistant-api',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.use('/api/projects', projectsRouter);
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+  });
+});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Project Delivery Assistant API listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;
