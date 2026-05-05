@@ -13,10 +13,10 @@ cd backend
 npm install
 ```
 
-### Frontend
-Navigate to the `frontend` directory and install the dependencies:
+### Callout Max App
+Navigate to the `callout-max-app` directory and install the dependencies:
 ```
-cd frontend
+cd callout-max-app
 npm install
 ```
 
