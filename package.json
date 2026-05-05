@@ -1,0 +1,14 @@
+{
+  "name": "project-delivery-assistant",
+  "version": "1.0.0",
+  "description": "Project Delivery Assistant API",
+  "main": "backend_server.js",
+  "scripts": {
+    "start": "node backend_server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0"
+  }
+}
