@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import ProjectList from './components/ProjectList';
+import ProjectList from './components/ProjectList.jsx';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';

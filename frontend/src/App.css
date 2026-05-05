@@ -25,14 +25,13 @@ button {
 }
 
 .hero {
+  align-items: center;
   background: linear-gradient(135deg, #17324d 0%, #215c8f 100%);
   color: #fff;
-  padding: 48px 24px;
-}
-
-.hero-content {
-  margin: 0 auto;
-  max-width: 1100px;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+  padding: 48px max(24px, calc((100vw - 1100px) / 2));
 }
 
 .eyebrow {
@@ -50,14 +49,37 @@ button {
   margin: 0;
 }
 
-.hero-copy {
+.hero p:not(.eyebrow) {
   color: #d8eaff;
   font-size: 1.1rem;
   line-height: 1.7;
   max-width: 720px;
 }
 
-.dashboard {
+.stats-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stats-grid div {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.stats-grid span {
+  display: block;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.stats-grid small {
+  color: #d8eaff;
+}
+
+.content-grid {
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(280px, 360px) 1fr;
@@ -79,20 +101,13 @@ button {
   padding: 24px;
 }
 
-.panel h2,
-.list-header h2 {
-  margin: 0 0 6px;
-}
-
-.muted {
-  color: #66768a;
-  margin: 0;
+.panel h2 {
+  margin: 0 0 18px;
 }
 
 .project-form {
   display: grid;
   gap: 14px;
-  margin-top: 22px;
 }
 
 .project-form label {
@@ -105,7 +120,8 @@ button {
 
 .project-form input,
 .project-form select,
-.project-form textarea {
+.project-form textarea,
+.card-actions select {
   border: 1px solid #c9d6e4;
   border-radius: 10px;
   color: #172033;
@@ -123,9 +139,7 @@ button {
   grid-template-columns: 1fr 1fr;
 }
 
-.primary-button,
-.secondary-button,
-.ghost-button,
+.project-form button,
 .danger-button {
   border: 0;
   border-radius: 999px;
@@ -133,63 +147,19 @@ button {
   padding: 10px 16px;
 }
 
-.primary-button {
+.project-form button {
   background: #1f7bd8;
   color: #fff;
 }
 
-.secondary-button {
-  background: #e8f2ff;
-  color: #125a9f;
-}
-
-.ghost-button {
-  background: transparent;
-  color: #125a9f;
+.project-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .danger-button {
   background: #fee4e2;
   color: #b42318;
-}
-
-.form-actions,
-.card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.list-header {
-  align-items: flex-start;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.summary {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 18px;
-}
-
-.summary-card {
-  background: #fff;
-  border: 1px solid #dbe4ef;
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.summary-value {
-  display: block;
-  font-size: 1.8rem;
-  font-weight: 900;
-}
-
-.summary-label {
-  color: #66768a;
-  font-size: 0.85rem;
 }
 
 .project-grid {
@@ -211,6 +181,11 @@ button {
 .project-card h3 {
   font-size: 1.25rem;
   margin: 0 0 8px;
+}
+
+.project-card p {
+  color: #66768a;
+  margin: 0;
 }
 
 .status-pill {
@@ -242,8 +217,7 @@ button {
   color: #067647;
 }
 
-.meta-row,
-.task-progress {
+.meta-row {
   color: #66768a;
   display: flex;
   flex-wrap: wrap;
@@ -265,8 +239,14 @@ button {
   text-decoration: line-through;
 }
 
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .empty-state,
-.error-banner {
+.alert {
   border-radius: 14px;
   padding: 18px;
 }
@@ -277,16 +257,18 @@ button {
   color: #66768a;
 }
 
-.error-banner {
+.alert {
   background: #fff1f3;
   border: 1px solid #fecdca;
   color: #b42318;
-  margin-bottom: 16px;
+  margin: 24px auto 0;
+  max-width: 1100px;
 }
 
 @media (max-width: 860px) {
-  .dashboard,
-  .summary {
+  .hero,
+  .content-grid,
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
