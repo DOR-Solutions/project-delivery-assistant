@@ -5,11 +5,9 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 # Backend deps (idempotent) + start
 cd "$ROOT/backend"
-if [ ! -d .venv ]; then
-  python3 -m venv .venv
-  ./.venv/bin/pip install --upgrade pip -q
-  ./.venv/bin/pip install -r requirements.txt -q
-fi
+[ -d .venv ] || { python3 -m venv .venv && ./.venv/bin/pip install --upgrade pip -q; }
+# Always sync requirements (fast when satisfied; picks up new deps like python-pptx)
+./.venv/bin/pip install -r requirements.txt -q
 echo "==> Starting backend API on http://localhost:8000 …"
 ./.venv/bin/uvicorn app.main:app --port 8000 > /tmp/maxai-backend.log 2>&1 &
 sleep 2

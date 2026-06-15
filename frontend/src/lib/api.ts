@@ -42,6 +42,8 @@ export interface StrategyOut {
   objective: string;
   mitigation_actions: { area: string; action: string; mitigation: string; responsibility: string; priority: string }[];
   fmea: { process: string; failure_mode: string; effect: string; severity: number; controls: string }[];
+  access_windows: { item: number; area: string; access: string; start: string; finish: string; original_duration: string; new_duration: string }[];
+  approvals: { name: string; company: string; role: string }[];
   command_control: string;
   contingency: string;
   predicted_risks: { title: string; likelihood: number; impact: number; score?: number; band?: string; source?: string; rationale: string }[];
@@ -68,6 +70,11 @@ export const api = {
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
   strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
+  exportPptx: async (plan: any): Promise<Blob> => {
+    const r = await fetch(`${BASE}/ops/strategy/pptx`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plan) });
+    if (!r.ok) throw new Error(await r.text());
+    return r.blob();
+  },
   impact: (pid: string, area: string) => get<any>(`/ops/impact?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),

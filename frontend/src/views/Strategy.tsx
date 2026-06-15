@@ -16,6 +16,7 @@ export default function Strategy({ pid }: { pid: string }) {
   const [acts, setActs] = useState<Act[]>([]);
   const [todo, setTodo] = useState<Todo[]>([]);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const run = () => {
     setBusy(true); setErr(""); setS(null);
@@ -45,6 +46,26 @@ export default function Strategy({ pid }: { pid: string }) {
     navigator.clipboard.writeText(L.join("\n")).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
   };
 
+  const exportPptx = () => {
+    if (!s) return;
+    setExporting(true);
+    const plan = {
+      project: pid,
+      objective: s.objective, narrative: s.narrative,
+      mitigation_actions: acts, fmea: s.fmea,
+      access_windows: s.access_windows, approvals: s.approvals,
+      command_control: s.command_control, contingency: s.contingency,
+      predicted_risks: s.predicted_risks,
+      todo: todo.map((t) => ({ text: t.text, owner: t.owner, priority: t.priority })),
+    };
+    api.exportPptx(plan).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `MAX_${pid}_Mitigation_Plan.pptx`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }).catch((e) => setErr(String(e))).finally(() => setExporting(false));
+  };
+
   const ipt = (val: string, on: (v: string) => void, ph: string, style: any = {}) => (
     <input value={val} onChange={(e) => on(e.target.value)} placeholder={ph}
       style={{ width: "100%", border: "none", background: "transparent", color: "var(--ink)", fontSize: 12, outline: "none", ...style }} />
@@ -66,6 +87,7 @@ export default function Strategy({ pid }: { pid: string }) {
           style={{ flex: 1, padding: "11px 14px", borderRadius: 8, border: "1px solid var(--bor)", background: "var(--card)", color: "var(--ink)", fontSize: 13 }} />
         <button className="btn" onClick={run} disabled={busy}>{busy ? "Analysing…" : s ? "Refine" : "Generate"}</button>
         {s && <button className="btn" style={{ background: "transparent", color: "var(--teal)", border: "1px solid var(--bor)" }} onClick={copy}>{copied ? "✓ Copied" : "Copy"}</button>}
+        {s && <button className="btn" onClick={exportPptx} disabled={exporting}>{exporting ? "Exporting…" : "⬇ Export .pptx"}</button>}
       </div>
 
       {err && <div className="card" style={{ marginTop: 14, color: "#D4374C" }}>Could not generate: {err}</div>}
@@ -128,6 +150,30 @@ export default function Strategy({ pid }: { pid: string }) {
             </table>
           </div>
 
+          {s.access_windows.length > 0 && (
+            <>
+              <div className="sec">Access windows &amp; schedule impact</div>
+              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+                <table>
+                  <thead><tr><th>Item</th><th>Line/Area</th><th>Access</th><th>Start</th><th>Finish</th><th>Original</th><th>New</th></tr></thead>
+                  <tbody>
+                    {s.access_windows.map((a, i) => (
+                      <tr key={i}>
+                        <td style={{ fontFamily: "var(--fm)" }}>{a.item}</td>
+                        <td style={{ fontWeight: 600 }}>{a.area}</td>
+                        <td>{a.access}</td>
+                        <td style={{ fontFamily: "var(--fm)" }}>{a.start}</td>
+                        <td style={{ fontFamily: "var(--fm)" }}>{a.finish}</td>
+                        <td style={{ color: "var(--gray)" }}>{a.original_duration}</td>
+                        <td style={{ color: "var(--green)", fontWeight: 700 }}>{a.new_duration}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
           <div className="two-col" style={{ marginTop: 18 }}>
             <div>
               <div className="sec">Predicted risks ({s.predicted_risks.length})</div>
@@ -168,6 +214,22 @@ export default function Strategy({ pid }: { pid: string }) {
             <div className="card"><div className="panel-h">Command &amp; control</div><div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}>{s.command_control}</div></div>
             <div className="card"><div className="panel-h">Contingency</div><div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}>{s.contingency}</div></div>
           </div>
+
+          {s.approvals.length > 0 && (
+            <>
+              <div className="sec">Stakeholder approvals</div>
+              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+                <table>
+                  <thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Signature</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {s.approvals.map((a, i) => (
+                      <tr key={i}><td>{a.name || "—"}</td><td style={{ fontWeight: 600 }}>{a.company}</td><td>{a.role}</td><td style={{ color: "var(--gray2)" }}>____________</td><td style={{ color: "var(--gray2)" }}>________</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

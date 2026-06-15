@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
+from typing import Any
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
@@ -195,6 +196,8 @@ async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_d
             "objective": enhanced.get("objective") or base["objective"],
             "mitigation_actions": enhanced.get("mitigation_actions") or base["mitigation_actions"],
             "fmea": enhanced.get("fmea") or base["fmea"],
+            "access_windows": enhanced.get("access_windows") or base["access_windows"],
+            "approvals": base["approvals"],
             "command_control": enhanced.get("command_control") or base["command_control"],
             "contingency": enhanced.get("contingency") or base["contingency"],
             "predicted_risks": enhanced.get("predicted_risks") or base["predicted_risks"],
@@ -202,6 +205,36 @@ async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_d
             "inputs": base["inputs"],
         }
     return {"ai": False, "narrative": "", **base}
+
+
+class PlanExport(BaseModel):
+    project: str = "Mitigation Plan"
+    objective: str = ""
+    narrative: str = ""
+    mitigation_actions: list[dict] = []
+    fmea: list[dict] = []
+    access_windows: list[dict] = []
+    approvals: list[dict] = []
+    command_control: str = ""
+    contingency: str = ""
+    predicted_risks: list[dict] = []
+    todo: list[dict] = []
+
+
+@router.post("/strategy/pptx")
+def strategy_pptx(plan: PlanExport):
+    """Render the (possibly edited) mitigation plan to a PowerPoint deck."""
+    from .. import pptx_export
+    try:
+        data = pptx_export.build_pptx(plan.model_dump())
+    except ImportError:
+        raise HTTPException(503, "PowerPoint export needs python-pptx installed (re-run ./start.sh to install).")
+    safe = "".join(c if c.isalnum() else "_" for c in plan.project)[:50] or "mitigation_plan"
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="MAX_{safe}_Mitigation_Plan.pptx"'},
+    )
 
 
 @router.get("/impact")

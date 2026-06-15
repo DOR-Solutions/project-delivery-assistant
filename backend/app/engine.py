@@ -260,6 +260,29 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
     contingency = ("BAU CSOPs to be followed; all contingency procedures align with Business-As-Usual "
                    "standard operating procedures.")
 
+    # ---- access windows & schedule impact (indicative, from workstreams) ----
+    access_windows: list[dict] = []
+    base_day = date(2026, 6, 15)
+    for i, w in enumerate(sorted(meta.get("workstreams", []), key=lambda x: x["pct"])[:4], 1):
+        start = base_day + timedelta(days=7 * i)
+        original = max(2, round((100 - w["pct"]) / 12))
+        new = max(1, original - 2)
+        access_windows.append({
+            "item": i, "area": w["name"], "access": "24h (Sun 22:30 – Fri 03:30)",
+            "start": start.isoformat(), "finish": (start + timedelta(weeks=new)).isoformat(),
+            "original_duration": f"{original} wk", "new_duration": f"{new} wk",
+        })
+
+    approvals = [
+        {"name": "", "company": "Vanderlande", "role": "Project Manager (Technical)"},
+        {"name": "", "company": "HAL", "role": "T5 TBBM"},
+        {"name": "", "company": "HAL", "role": "Project Manager"},
+        {"name": "", "company": "HAL", "role": "Resilience Manager"},
+        {"name": "", "company": "British Airways", "role": "BA Senior Manager"},
+        {"name": "", "company": "ABC", "role": "Head of Operations"},
+        {"name": "", "company": "DHL", "role": "ITO Manager"},
+    ]
+
     # ---- PM to-do list ----
     todo = list(gen_daily_tasks(ops, comp))
     for i, d in enumerate(docs):
@@ -296,6 +319,8 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
         "objective": objective,
         "mitigation_actions": mitigation_actions,
         "fmea": fmea,
+        "access_windows": access_windows,
+        "approvals": approvals,
         "command_control": command_control,
         "contingency": contingency,
         "predicted_risks": predicted,

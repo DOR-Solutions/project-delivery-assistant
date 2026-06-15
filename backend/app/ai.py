@@ -68,6 +68,7 @@ async def ai_strategy(context: str, instruction: str | None = None) -> dict | No
               '"objective":"1-2 sentence objective (protect passenger experience, maintain missed-bag performance vs baseline)",'
               '"mitigation_actions":[{"area":"area/zone","action":"short","mitigation":"what to do incl. staffing/flow diversions","responsibility":"team/role","priority":"critical|high|medium"}],'
               '"fmea":[{"process":"area/asset","failure_mode":"short","effect":"impact","severity":1-10,"controls":"control measure"}],'
+              '"access_windows":[{"item":1,"area":"line/area","access":"24h (Sun 22:30-Fri 03:30)","start":"date","finish":"date","original_duration":"X wk","new_duration":"Y wk"}],'
               '"command_control":"go/no-go & coordination note","contingency":"contingency note",'
               '"predicted_risks":[{"title":"short","likelihood":1-5,"impact":1-5,"rationale":"why, grounded in the data"}],'
               '"todo":[{"text":"PM action","detail":"1 sentence","owner":"role","priority":"critical|high|medium"}]}')
