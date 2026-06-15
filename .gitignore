@@ -147,3 +147,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+maxai.db
