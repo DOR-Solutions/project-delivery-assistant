@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      - DATABASE_URL=sqlite:////data/maxai.db
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:4173
+    volumes: ["maxdata:/data"]
+  frontend:
+    build: ./frontend
+    ports: ["5173:80"]
+    depends_on: [backend]
+volumes:
+  maxdata:
