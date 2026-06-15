@@ -39,7 +39,11 @@ export interface ForesightOut { predictions: any[]; synergies: any[]; }
 export interface StrategyOut {
   ai: boolean;
   narrative: string;
-  mitigation: { title: string; detail: string; owner: string; priority: string }[];
+  objective: string;
+  mitigation_actions: { area: string; action: string; mitigation: string; responsibility: string; priority: string }[];
+  fmea: { process: string; failure_mode: string; effect: string; severity: number; controls: string }[];
+  command_control: string;
+  contingency: string;
   predicted_risks: { title: string; likelihood: number; impact: number; score?: number; band?: string; source?: string; rationale: string }[];
   todo: { id?: string; text: string; detail?: string; owner: string; pri?: string; priority?: string; tag?: string }[];
   inputs: { documents: number; risks: number; bag_days: number; forecast_days: number };

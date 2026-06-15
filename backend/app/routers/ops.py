@@ -192,7 +192,11 @@ async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_d
         return {
             "ai": True,
             "narrative": enhanced.get("narrative", ""),
-            "mitigation": enhanced.get("mitigation") or base["mitigation"],
+            "objective": enhanced.get("objective") or base["objective"],
+            "mitigation_actions": enhanced.get("mitigation_actions") or base["mitigation_actions"],
+            "fmea": enhanced.get("fmea") or base["fmea"],
+            "command_control": enhanced.get("command_control") or base["command_control"],
+            "contingency": enhanced.get("contingency") or base["contingency"],
             "predicted_risks": enhanced.get("predicted_risks") or base["predicted_risks"],
             "todo": enhanced.get("todo") or base["todo"],
             "inputs": base["inputs"],

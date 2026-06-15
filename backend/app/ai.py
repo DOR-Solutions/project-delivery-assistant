@@ -64,16 +64,22 @@ async def ai_strategy(context: str, instruction: str | None = None) -> dict | No
     Returns parsed JSON, or None so the caller can fall back to the engine."""
     if not ai_available():
         return None
-    schema = ('{"narrative":"3-4 sentence executive mitigation strategy",'
-              '"mitigation":[{"title":"short","detail":"1-2 sentences","owner":"role","priority":"critical|high|medium"}],'
+    schema = ('{"narrative":"3-4 sentence executive summary",'
+              '"objective":"1-2 sentence objective (protect passenger experience, maintain missed-bag performance vs baseline)",'
+              '"mitigation_actions":[{"area":"area/zone","action":"short","mitigation":"what to do incl. staffing/flow diversions","responsibility":"team/role","priority":"critical|high|medium"}],'
+              '"fmea":[{"process":"area/asset","failure_mode":"short","effect":"impact","severity":1-10,"controls":"control measure"}],'
+              '"command_control":"go/no-go & coordination note","contingency":"contingency note",'
               '"predicted_risks":[{"title":"short","likelihood":1-5,"impact":1-5,"rationale":"why, grounded in the data"}],'
               '"todo":[{"text":"PM action","detail":"1 sentence","owner":"role","priority":"critical|high|medium"}]}')
     steer = f"\n\nPM INSTRUCTION (prioritise this): {instruction}" if instruction and instruction.strip() else ""
     prompt = (UMP_DOMAIN +
               "\n\nYou are MAX. Using ONLY the project context below (documents, lessons learned, "
-              "bag-volume data, risk register, schedule), produce a delivery mitigation strategy, "
-              "predict the emerging risks, and write a prioritised to-do list for the project manager. "
-              "Ground every point in the supplied data; cite document names where relevant. "
+              "bag-volume data, risk register, schedule), produce a Heathrow-style mitigation plan in the "
+              "house format used for Pilz commissioning plans: an objective, an Area/Action/Mitigation/"
+              "Responsibility action table (include flow diversions and staffing where known), an FMEA "
+              "(Process/Failure Mode/Effect/Severity/Controls), command-and-control and contingency notes, "
+              "predicted emerging risks, and a prioritised PM to-do list. Ground every point in the supplied "
+              "data; cite document names where relevant. "
               "Return ONLY JSON matching: " + schema + steer + "\n\n=== PROJECT CONTEXT ===\n" + context[:11000])
     try:
         raw = await ask(prompt, max_tokens=2000)

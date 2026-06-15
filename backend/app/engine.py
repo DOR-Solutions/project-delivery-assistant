@@ -209,30 +209,56 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
             seen[key] = p
     predicted = sorted(seen.values(), key=lambda x: -x["score"])[:10]
 
-    # ---- mitigation strategy ----
-    mitigation: list[dict] = []
-    for r in risks[:6]:
-        if r["score"] >= 9:
-            mitigation.append({"title": f"Mitigate: {r['title']}",
-                               "detail": r.get("mitigation") or "Assign an owner and a dated mitigation action.",
-                               "owner": r.get("owner", "PM"),
-                               "priority": "critical" if r["score"] >= 15 else "high"})
+    # ---- objective (Pilz mitigation-plan house style) ----
+    name = meta.get("name", "this project")
+    objective = (
+        f"Protect the passenger experience and maintain missed-bag performance versus baseline while "
+        f"delivering {name} ({completion}% complete, gate {meta.get('current_gate', '')}). Deliver the works "
+        f"with minimal disruption to passenger flow, service levels and terminal operations throughout the "
+        f"access window and recovery period."
+    )
+
+    # ---- mitigation actions (Area | Action | Mitigation | Responsibility) ----
+    mitigation_actions: list[dict] = []
+    for r in risks[:8]:
+        if r["score"] >= 6:
+            mitigation_actions.append({
+                "area": r.get("area", "—"), "action": f"Mitigate: {r['title']}",
+                "mitigation": r.get("mitigation") or "Assign an owner and a dated mitigation action.",
+                "responsibility": r.get("owner", "PM"),
+                "priority": "critical" if r["score"] >= 15 else "high" if r["score"] >= 9 else "medium",
+            })
     if util >= 85:
-        mitigation.append({"title": "Protect peak-day throughput",
-                           "detail": "Stage contingency crews and pre-clear make-up laterals on Type-A (24k+) days; hold a 02:00 go/no-go.",
-                           "owner": "Operations", "priority": "high"})
+        mitigation_actions.append({"area": "Throughput", "action": "Protect peak-day flow",
+                                   "mitigation": "Stage contingency crews; pre-clear make-up laterals on Type-A (24k+) days; hold a 02:00 go/no-go.",
+                                   "responsibility": "Operations", "priority": "high"})
     if completion < 60:
-        mitigation.append({"title": "Recover schedule to next gate",
-                           "detail": f"Re-baseline the critical path; ring-fence resources on the lowest workstream to lift {completion}% toward gate exit.",
-                           "owner": "Programme", "priority": "high"})
-    # lessons learned / actions / decisions from ingested documents
+        mitigation_actions.append({"area": "Schedule", "action": "Recover to next gate",
+                                   "mitigation": f"Re-baseline the critical path; ring-fence resource on the lowest workstream to lift {completion}% toward gate exit.",
+                                   "responsibility": "Programme", "priority": "high"})
     for d in docs:
         for ins in (d.get("insights") or []):
             if ins.get("type") in ("action", "decision"):
-                mitigation.append({"title": ins.get("title", "Apply lesson learned").rstrip("…"),
-                                   "detail": f"{ins.get('detail', '')} (source: {d.get('name', 'document')})",
-                                   "owner": "PM", "priority": "medium"})
-    mitigation = mitigation[:10]
+                mitigation_actions.append({"area": "Lessons learned", "action": ins.get("title", "Apply lesson learned").rstrip("…"),
+                                           "mitigation": f"{ins.get('detail', '')} (source: {d.get('name', 'document')})",
+                                           "responsibility": "PM", "priority": "medium"})
+    mitigation_actions = mitigation_actions[:12]
+
+    # ---- FMEA (Process | Failure Mode | Effect | Severity | Controls) ----
+    EFFECT = {"HBS12": "Screening delay / missed bags", "HBS3": "Commissioning delay / missed bags",
+              "RECLAIM": "Reclaim back-to-service overrun", "MAKEUP": "Make-up dieback / missed flights",
+              "OOG": "Out-of-gauge routing failure", "VSO": "Sortation delay"}
+    fmea: list[dict] = []
+    for r in risks[:8]:
+        fmea.append({"process": r.get("area", "—"), "failure_mode": r["title"],
+                     "effect": EFFECT.get(r.get("area", ""), "Delay / missed flight"),
+                     "severity": min(10, int(r["impact"]) * 2),
+                     "controls": r.get("mitigation") or "Project O&M to support; visual checks."})
+
+    command_control = ("Central coordination via BCCR & Project FODM. Daily Go/No-Go calls Mon–Thu with "
+                       "BCCR, FODM and BA; real-time status updates and decision-making.")
+    contingency = ("BAU CSOPs to be followed; all contingency procedures align with Business-As-Usual "
+                   "standard operating procedures.")
 
     # ---- PM to-do list ----
     todo = list(gen_daily_tasks(ops, comp))
@@ -257,15 +283,21 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
             return any(t in blob for t in toks)
 
         if toks:
-            mm = [m for m in mitigation if _matches(m)]
+            ma = [m for m in mitigation_actions if _matches(m)]
+            ff = [f for f in fmea if _matches(f)]
             pp = [p for p in predicted if _matches(p)]
             tt = [t for t in todo if _matches(t)]
-            mitigation = mm or mitigation
+            mitigation_actions = ma or mitigation_actions
+            fmea = ff or fmea
             predicted = pp or predicted
             todo = tt or todo
 
     return {
-        "mitigation": mitigation,
+        "objective": objective,
+        "mitigation_actions": mitigation_actions,
+        "fmea": fmea,
+        "command_control": command_control,
+        "contingency": contingency,
         "predicted_risks": predicted,
         "todo": todo,
         "inputs": {

@@ -40,4 +40,40 @@ def parse_file(filename: str, data: bytes) -> Tuple[str, str]:
         return parse_xlsx(data), "xlsx"
     if ext in ("docx", "doc"):
         return parse_docx(data), "docx"
+    if ext in ("pptx", "ppt"):
+        return parse_pptx(data), "pptx"
     return data.decode("utf-8", errors="replace"), ("csv" if ext in ("csv", "tsv") else "text")
+
+
+def parse_pptx(data: bytes) -> str:
+    """Slide text + tables from PowerPoint. Uses python-pptx when available,
+    otherwise falls back to reading the slide XML directly (so it works even
+    before the dependency is installed)."""
+    try:
+        from pptx import Presentation
+        prs = Presentation(io.BytesIO(data))
+        chunks = []
+        for i, slide in enumerate(prs.slides, 1):
+            chunks.append(f"=== Slide {i} ===")
+            for shape in slide.shapes:
+                if shape.has_text_frame and shape.text_frame.text.strip():
+                    chunks.append(shape.text_frame.text.strip())
+                if shape.has_table:
+                    for row in shape.table.rows:
+                        cells = [c.text.strip() for c in row.cells]
+                        if any(cells):
+                            chunks.append(" | ".join(cells))
+        return "\n".join(chunks).strip()
+    except Exception:
+        # XML fallback: pull every <a:t> text run, slide by slide
+        import zipfile, re, html
+        out = []
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            slides = sorted([n for n in z.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n)],
+                            key=lambda n: int(re.search(r"(\d+)", n).group()))
+            for i, sn in enumerate(slides, 1):
+                runs = re.findall(r"<a:t>(.*?)</a:t>", z.read(sn).decode("utf-8", "replace"), re.S)
+                text = html.unescape(" ".join(r.strip() for r in runs if r.strip()))
+                if text:
+                    out.append(f"=== Slide {i} ===\n{text}")
+        return "\n".join(out).strip()
