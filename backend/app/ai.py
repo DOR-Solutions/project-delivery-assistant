@@ -16,12 +16,15 @@ async def ask(prompt: str, max_tokens: int = 1500) -> str:
     key = os.getenv("MAXAI_ANTHROPIC_KEY")
     if not key:
         raise RuntimeError("No AI key configured")
-    model = os.getenv("MAXAI_MODEL", "claude-sonnet-4-20250514")
+    key = key.strip()
+    model = os.getenv("MAXAI_MODEL", "claude-sonnet-4-20250514").strip()
     async with httpx.AsyncClient(timeout=60) as client:
         r = await client.post("https://api.anthropic.com/v1/messages",
             headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
             json={"model": model, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]})
-        r.raise_for_status()
+        if r.status_code >= 400:
+            # Surface Anthropic's actual error so failures are diagnosable
+            raise RuntimeError(f"Anthropic {r.status_code} (model={model!r}): {r.text[:600]}")
         data = r.json()
         return "".join(c["text"] for c in data["content"] if c["type"] == "text")
 
