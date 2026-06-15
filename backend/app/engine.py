@@ -112,3 +112,54 @@ def forecast_mitigation(mitigation: list[dict], start: str = "2026-06-09", horiz
                    "foh": round(avg_total * sums["foh"] / tot), "cdf": round(avg_total * sums["cdf"] / tot),
                    "mip": round(avg_total * sums["mip"] / tot)})
     return {"fc": fc, "avg_total": avg_total}
+
+# ---------- gates ----------
+GATES = ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8"]
+GATE_LABELS = {
+    "G0": "Strategic fit", "G1": "Feasibility", "G2": "Business case",
+    "G3": "Design freeze", "G4": "Procurement", "G5": "Build / Install",
+    "G6": "Commissioning", "G7": "Handover / SAT", "G8": "Benefits realised",
+}
+
+def gate_progress(current_gate: str, completion: int) -> dict:
+    idx = GATES.index(current_gate) if current_gate in GATES else 0
+    stages = []
+    for i, g in enumerate(GATES):
+        status = "done" if i < idx else "active" if i == idx else "todo"
+        stages.append({"gate": g, "label": GATE_LABELS[g], "status": status})
+    nxt = GATES[idx + 1] if idx + 1 < len(GATES) else GATES[idx]
+    return {"current": current_gate, "next": nxt, "stages": stages,
+            "next_label": GATE_LABELS.get(nxt, "")}
+
+# ---------- portfolio health (RAG) ----------
+def health_for(completion: int, critical: int, open_high: int) -> dict:
+    """Deterministic RAG: completion-driven, with critical risk capping green→amber."""
+    if completion < 45:
+        rag = "red"
+    elif completion >= 70 and critical == 0:
+        rag = "green"
+    else:
+        rag = "amber"
+    return {"rag": rag, "label": rag.upper()}
+
+# ---------- what-if scenario simulator ----------
+def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_completion: int) -> dict:
+    """Live model: bag volume × crew × extra completion -> utilisation,
+    projected completion, risk index and SAT date shift (days)."""
+    base_util = comp.get("util_pct") or 80
+    crew_base = meta.get("crew_baseline") or crew or 1
+    crew = max(int(crew), 1)
+    util = round(base_util * (bag_volume_pct / 100.0) * (crew_base / crew))
+    util = max(0, min(200, util))
+    completion = min(100, int(meta.get("completion", 0)) + int(extra_completion))
+    critical = comp.get("critical", 0)
+    if util >= 92 or (critical > 0 and util >= 85):
+        idx = "High"
+    elif util >= 78:
+        idx = "Medium"
+    else:
+        idx = "Low"
+    gap = 100 - completion
+    shift = round(max(0, util - 82) * 0.35 + gap * 0.12 - extra_completion * 0.2)
+    return {"utilisation": util, "projected_completion": completion,
+            "risk_index": idx, "sat_date_shift": shift}

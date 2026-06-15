@@ -15,7 +15,27 @@ async function post<T>(path: string, body: any): Promise<T> {
 
 export interface Project { id: string; name: string; terminal: string; }
 export interface Doc { id: string; name: string; kind: string; summary: string; topics: string[]; insights: any[]; status: string; }
-export interface OpsSummary { kpis: { bags: number; utilisation: number; adherence: number; open_high: number; critical: number }; tasks: any[]; risks: any[]; }
+export interface Health { rag: "green" | "amber" | "red"; label: string; }
+export interface Workstream { name: string; pct: number; }
+export interface GateStage { gate: string; label: string; status: "done" | "active" | "todo"; }
+export interface Gates { current: string; next: string; next_label: string; stages: GateStage[]; }
+
+export interface Summary {
+  project_id: string; name: string; terminal: string; completion: number;
+  health: Health;
+  kpis: { completion: number; bags: number; utilisation: number; adherence: number; open_risks: number; critical: number; tasks_today: number; next_gate: string; };
+  milestones: { on_track: number; total: number; items: { name: string; on_track: boolean }[] };
+  workstreams: Workstream[];
+  gates: Gates;
+  throughput: { date: string; planned: number; actual: number }[];
+  tasks: any[]; risks: any[];
+  crew_baseline: number; crew_on_shift: number;
+}
+
+export interface PortfolioProject { project_id: string; name: string; terminal: string; completion: number; health: Health; open_risks: number; critical: number; next_gate: string; risk_count: number; }
+export interface PortfolioOut { projects: PortfolioProject[]; rag_counts: { green: number; amber: number; red: number }; avg_completion: number; total_open_risks: number; total_critical: number; }
+export interface WhatIfOut { utilisation: number; projected_completion: number; risk_index: string; sat_date_shift: number; }
+export interface ForesightOut { predictions: any[]; synergies: any[]; }
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 
 export const api = {
@@ -30,7 +50,11 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.json();
   },
-  opsSummary: (pid: string) => get<OpsSummary>(`/ops/summary?project_id=${pid}`),
+  summary: (pid: string) => get<Summary>(`/ops/summary?project_id=${pid}`),
+  portfolio: () => get<PortfolioOut>("/ops/portfolio"),
+  whatif: (project_id: string, bag_volume_pct: number, crew_on_shift: number, extra_completion: number) =>
+    post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
+  foresight: () => get<ForesightOut>("/ops/foresight"),
   impact: (pid: string, area: string) => get<any>(`/ops/impact?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),

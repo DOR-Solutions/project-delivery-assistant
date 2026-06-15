@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { api, OpsSummary } from "../lib/api";
+import { api, Summary } from "../lib/api";
 
 const sev = (b: string) => ({ critical: "#D4374C", high: "#B0720A", medium: "#C9A227", low: "#178A43" }[b] || "#6B8093");
 
 export default function RiskEngine({ pid }: { pid: string }) {
-  const [s, setS] = useState<OpsSummary | null>(null);
+  const [s, setS] = useState<Summary | null>(null);
   const [filter, setFilter] = useState("all");
-  useEffect(() => { api.opsSummary(pid).then(setS).catch(() => {}); }, [pid]);
+  useEffect(() => { api.summary(pid).then(setS).catch(() => {}); }, [pid]);
   if (!s) return <div><h1>Risk Engine</h1><div className="card">Loading…</div></div>;
   const risks = s.risks.filter((r) => filter === "all" || r.band === filter);
   return (

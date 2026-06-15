@@ -35,3 +35,27 @@ def test_forecast_mitigation():
     mit = [{"date":"2026-06-03","day":"Wed","foh":1100,"cdf":400,"mip":1000,"total":2500}]
     out = engine.forecast_mitigation(mit, start="2026-06-09", horizon=3)
     assert out["avg_total"] == 2500 and len(out["fc"]) == 3
+
+def test_health_rag():
+    assert engine.health_for(20, 1, 2)["rag"] == "red"      # low completion
+    assert engine.health_for(58, 1, 1)["rag"] == "amber"    # mid completion
+    assert engine.health_for(72, 0, 2)["rag"] == "green"    # high, no critical
+    assert engine.health_for(80, 3, 5)["rag"] == "amber"    # high but critical caps to amber
+
+def test_gate_progress():
+    g = engine.gate_progress("G6", 80)
+    assert g["next"] == "G7" and g["next_label"] == "Handover / SAT"
+    stages = {s["gate"]: s["status"] for s in g["stages"]}
+    assert stages["G5"] == "done" and stages["G6"] == "active" and stages["G7"] == "todo"
+    assert len(g["stages"]) == 9
+
+def test_whatif():
+    comp = {"util_pct": 85, "critical": 1, "last": {"actual": 24000}}
+    meta = {"completion": 80, "crew_baseline": 38}
+    base = engine.whatif(comp, meta, 100, 38, 0)
+    assert base["utilisation"] == 85 and base["projected_completion"] == 80
+    # more volume, fewer crew -> higher utilisation and a later SAT
+    stressed = engine.whatif(comp, meta, 130, 25, 0)
+    assert stressed["utilisation"] > base["utilisation"]
+    assert stressed["risk_index"] == "High"
+    assert stressed["sat_date_shift"] >= base["sat_date_shift"]

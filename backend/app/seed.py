@@ -105,13 +105,15 @@ def seed_db():
     try:
         if db.query(models.Project).count() > 0:
             return
+        from .portfolio import PROJECTS_META  # lazy import avoids circular dependency
         for pid, name, term in PROJECTS:
             db.add(models.Project(id=pid, name=name, terminal=term))
-        # T5 risks
-        for r in T5_OPS["risks"]:
-            db.add(models.Risk(id=f"t5-{r['id']}", project_id="t5-baggage-programme",
-                   title=r["title"], area=r["area"], likelihood=r["likelihood"],
-                   impact=r["impact"], mitigation=r["mitigation"], owner=r["owner"]))
+        # Risk register for every project across the portfolio
+        for pid, meta in PROJECTS_META.items():
+            for r in meta.get("risks", []):
+                db.add(models.Risk(id=f"{pid}-{r['id']}", project_id=pid,
+                       title=r["title"], area=r["area"], likelihood=r["likelihood"],
+                       impact=r["impact"], mitigation=r["mitigation"], owner=r["owner"]))
         # a seed document
         db.add(models.Document(id="t5-seed-brief", project_id="t5-baggage-programme",
                name="T5 PILZ Programme Brief.txt", kind="text",
