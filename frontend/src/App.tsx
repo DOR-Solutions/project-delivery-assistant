@@ -8,6 +8,7 @@ import Ingest from "./views/Ingest";
 import Dashboard from "./views/Dashboard";
 import Documents from "./views/Documents";
 import Foresight from "./views/Foresight";
+import Strategy from "./views/Strategy";
 import Forecast from "./views/Forecast";
 import RiskEngine from "./views/RiskEngine";
 import Chat from "./views/Chat";
@@ -77,6 +78,7 @@ export default function App() {
             {wsLink("/dashboard", "◇", "Dashboard", 1)}
             {wsLink("/documents", "▤", "Documents", 1)}
             {wsLink("/foresight", "✦", "Foresight")}
+            {wsLink("/strategy", "🧭", "Strategy")}
             {wsLink("/forecast", "📈", "Bag Forecast")}
             {wsLink("/risk", "⚠", "Risk Engine")}
             {wsLink("/chat", "◆", "Ask MAX")}
@@ -98,6 +100,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard onOpen={setPid} />} />
           <Route path="/documents" element={<Documents pid={pid} />} />
           <Route path="/foresight" element={<Foresight onOpen={setPid} />} />
+          <Route path="/strategy" element={<Strategy pid={pid} />} />
           <Route path="/forecast" element={<Forecast pid={pid} />} />
           <Route path="/risk" element={<RiskEngine pid={pid} />} />
           <Route path="/chat" element={<Chat pid={pid} />} />

@@ -5,6 +5,7 @@ from ..database import get_db
 from .. import models
 from .. import engine
 from .. import portfolio
+from .. import ai
 from ..seed import T5_DIRECTS, T5_MITIGATION
 
 router = APIRouter(prefix="/api/ops", tags=["ops"])
@@ -143,6 +144,59 @@ def foresight(db: Session = Depends(get_db)):
             })
     predictions.sort(key=lambda p: -p["score"])
     return {"predictions": predictions[:12], "synergies": synergies[:8]}
+
+
+def _docs_for(project_id: str, db: Session) -> list[dict]:
+    rows = db.query(models.Document).filter(models.Document.project_id == project_id).all()
+    return [{"name": d.name, "kind": d.kind, "summary": d.summary or "",
+             "insights": d.insights or [], "text": (d.text or "")[:1500]} for d in rows]
+
+
+def _strategy_context(s: dict, docs: list[dict]) -> str:
+    """Compact, grounded context string for the LLM."""
+    lines = [f"PROJECT: {s['name']} ({s['terminal']}) — {s['completion']}% complete, health {s['health']['label']}.",
+             f"Gate {s['gates']['current']} (next {s['gates']['next']}: {s['gates']['next_label']}).",
+             f"KPIs: utilisation {s['kpis']['utilisation']}%, plan adherence {s['kpis']['adherence']}%, "
+             f"open high risks {s['kpis']['open_risks']}, critical {s['kpis']['critical']}, bags/day {s['kpis']['bags']}.",
+             "WORKSTREAMS: " + ", ".join(f"{w['name']} {w['pct']}%" for w in s["workstreams"]),
+             "RISK REGISTER:"]
+    for r in s["risks"]:
+        lines.append(f"  - [{r['band']} {r['score']}] {r['title']} (area {r.get('area','')}, owner {r.get('owner','')}) "
+                     f"mitigation: {r.get('mitigation','')}")
+    if docs:
+        lines.append("INGESTED DOCUMENTS:")
+        for d in docs:
+            lines.append(f"  • {d['name']} ({d['kind']}): {d['summary']}")
+            for ins in d["insights"][:4]:
+                lines.append(f"      - {ins.get('type','note')}: {ins.get('title','')} — {ins.get('detail','')}")
+    else:
+        lines.append("INGESTED DOCUMENTS: none yet (upload lessons learned, bag-volume data, schematics in Ingest).")
+    return "\n".join(lines)
+
+
+@router.get("/strategy")
+async def strategy(project_id: str, db: Session = Depends(get_db)):
+    """Synthesise mitigation strategy, predicted risks and a PM to-do list,
+    grounded in the project's risk register, bag data and ingested documents.
+    Uses Claude when available; falls back to the deterministic engine."""
+    ops = _ops_for(project_id, db)
+    comp = engine.compute_ops(ops)
+    docs = _docs_for(project_id, db)
+    forecast = {"directs": engine.forecast_directs(T5_DIRECTS)} if project_id == "t5-baggage-programme" else {}
+    base = engine.generate_strategy(ops, comp, docs, forecast)
+
+    s = _project_summary(project_id, ops)
+    enhanced = await ai.ai_strategy(_strategy_context(s, docs))
+    if enhanced:
+        return {
+            "ai": True,
+            "narrative": enhanced.get("narrative", ""),
+            "mitigation": enhanced.get("mitigation") or base["mitigation"],
+            "predicted_risks": enhanced.get("predicted_risks") or base["predicted_risks"],
+            "todo": enhanced.get("todo") or base["todo"],
+            "inputs": base["inputs"],
+        }
+    return {"ai": False, "narrative": "", **base}
 
 
 @router.get("/impact")

@@ -36,6 +36,14 @@ export interface PortfolioProject { project_id: string; name: string; terminal: 
 export interface PortfolioOut { projects: PortfolioProject[]; rag_counts: { green: number; amber: number; red: number }; avg_completion: number; total_open_risks: number; total_critical: number; }
 export interface WhatIfOut { utilisation: number; projected_completion: number; risk_index: string; sat_date_shift: number; }
 export interface ForesightOut { predictions: any[]; synergies: any[]; }
+export interface StrategyOut {
+  ai: boolean;
+  narrative: string;
+  mitigation: { title: string; detail: string; owner: string; priority: string }[];
+  predicted_risks: { title: string; likelihood: number; impact: number; score?: number; band?: string; source?: string; rationale: string }[];
+  todo: { id?: string; text: string; detail?: string; owner: string; pri?: string; priority?: string; tag?: string }[];
+  inputs: { documents: number; risks: number; bag_days: number; forecast_days: number };
+}
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 
 export const api = {
@@ -55,6 +63,7 @@ export const api = {
   whatif: (project_id: string, bag_volume_pct: number, crew_on_shift: number, extra_completion: number) =>
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
+  strategy: (pid: string) => get<StrategyOut>(`/ops/strategy?project_id=${pid}`),
   impact: (pid: string, area: string) => get<any>(`/ops/impact?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),

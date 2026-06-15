@@ -163,3 +163,95 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
     shift = round(max(0, util - 82) * 0.35 + gap * 0.12 - extra_completion * 0.2)
     return {"utilisation": util, "projected_completion": completion,
             "risk_index": idx, "sat_date_shift": shift}
+
+# ---------- strategy synthesis (deterministic) ----------
+def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | None = None) -> dict:
+    """Synthesise mitigation strategy, predicted risks and a PM to-do list from
+    the risk register, bag-throughput signals and ingested documents
+    (lessons learned, bag-volume data, schematics). Pure + deterministic so it
+    runs with or without the LLM layer."""
+    meta = ops.get("meta", {})
+    risks = comp["risks"]
+    completion = int(meta.get("completion", 0))
+    util = comp.get("util_pct", 0)
+
+    # ---- predicted risks: live register + signals + document-derived ----
+    predicted: list[dict] = []
+    for r in risks[:6]:
+        predicted.append({
+            "title": r["title"], "likelihood": r["likelihood"], "impact": r["impact"],
+            "score": r["score"], "band": r["band"], "source": "risk register",
+            "rationale": f"Live register entry in {r.get('area', '—')} (L{r['likelihood']}×I{r['impact']}).",
+        })
+    if util >= 85:
+        predicted.append({"title": "Peak-day throughput congestion", "likelihood": 4, "impact": 3,
+                          "score": 12, "band": "high", "source": "bag-volume data",
+                          "rationale": f"Throughput at {util}% of design capacity — spillover likely on Type-A days."})
+    if completion < 60:
+        predicted.append({"title": f"Slippage to gate {meta.get('current_gate', '')}", "likelihood": 4, "impact": 4,
+                          "score": 16, "band": "critical", "source": "schedule",
+                          "rationale": f"Only {completion}% complete — delivery confidence to the next gate is low."})
+    for d in docs:
+        for ins in (d.get("insights") or []):
+            if ins.get("type") == "risk":
+                predicted.append({"title": ins.get("title", "Document-flagged risk").rstrip("…"),
+                                  "likelihood": 3, "impact": 3, "score": 9, "band": "high",
+                                  "source": d.get("name", "document"),
+                                  "rationale": ins.get("detail", "")[:160]})
+    # de-dup by title, keep highest score, sort
+    seen: dict[str, dict] = {}
+    for p in predicted:
+        key = p["title"].lower()
+        if key not in seen or p["score"] > seen[key]["score"]:
+            seen[key] = p
+    predicted = sorted(seen.values(), key=lambda x: -x["score"])[:10]
+
+    # ---- mitigation strategy ----
+    mitigation: list[dict] = []
+    for r in risks[:6]:
+        if r["score"] >= 9:
+            mitigation.append({"title": f"Mitigate: {r['title']}",
+                               "detail": r.get("mitigation") or "Assign an owner and a dated mitigation action.",
+                               "owner": r.get("owner", "PM"),
+                               "priority": "critical" if r["score"] >= 15 else "high"})
+    if util >= 85:
+        mitigation.append({"title": "Protect peak-day throughput",
+                           "detail": "Stage contingency crews and pre-clear make-up laterals on Type-A (24k+) days; hold a 02:00 go/no-go.",
+                           "owner": "Operations", "priority": "high"})
+    if completion < 60:
+        mitigation.append({"title": "Recover schedule to next gate",
+                           "detail": f"Re-baseline the critical path; ring-fence resources on the lowest workstream to lift {completion}% toward gate exit.",
+                           "owner": "Programme", "priority": "high"})
+    # lessons learned / actions / decisions from ingested documents
+    for d in docs:
+        for ins in (d.get("insights") or []):
+            if ins.get("type") in ("action", "decision"):
+                mitigation.append({"title": ins.get("title", "Apply lesson learned").rstrip("…"),
+                                   "detail": f"{ins.get('detail', '')} (source: {d.get('name', 'document')})",
+                                   "owner": "PM", "priority": "medium"})
+    mitigation = mitigation[:10]
+
+    # ---- PM to-do list ----
+    todo = list(gen_daily_tasks(ops, comp))
+    for i, d in enumerate(docs):
+        for ins in (d.get("insights") or []):
+            if ins.get("type") == "action":
+                todo.append({"id": f"doc-{i}-{len(todo)}", "pri": "medium",
+                             "text": ins.get("title", "Follow up on document action").rstrip("…"),
+                             "detail": f"{ins.get('detail', '')} — from {d.get('name', 'document')}",
+                             "owner": "PM", "tag": "Doc"})
+    order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    todo.sort(key=lambda t: order.get(t.get("pri", "low"), 3))
+    todo = todo[:12]
+
+    return {
+        "mitigation": mitigation,
+        "predicted_risks": predicted,
+        "todo": todo,
+        "inputs": {
+            "documents": len(docs),
+            "risks": len(risks),
+            "bag_days": len(ops.get("bag_daily") or []),
+            "forecast_days": len((forecast or {}).get("directs", [])),
+        },
+    }
