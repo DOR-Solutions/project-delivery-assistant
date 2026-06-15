@@ -63,7 +63,7 @@ export const api = {
   whatif: (project_id: string, bag_volume_pct: number, crew_on_shift: number, extra_completion: number) =>
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
-  strategy: (pid: string) => get<StrategyOut>(`/ops/strategy?project_id=${pid}`),
+  strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
   impact: (pid: string, area: string) => get<any>(`/ops/impact?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),

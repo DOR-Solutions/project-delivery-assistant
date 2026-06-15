@@ -2,6 +2,7 @@
 Pure functions: risk scoring, utilisation, forecasting, impact, daily tasks.
 No framework dependencies so it is unit-testable and reusable."""
 from __future__ import annotations
+import re
 from datetime import date, timedelta
 from typing import Any
 
@@ -165,11 +166,13 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
             "risk_index": idx, "sat_date_shift": shift}
 
 # ---------- strategy synthesis (deterministic) ----------
-def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | None = None) -> dict:
+def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | None = None,
+                      focus: str | None = None) -> dict:
     """Synthesise mitigation strategy, predicted risks and a PM to-do list from
     the risk register, bag-throughput signals and ingested documents
     (lessons learned, bag-volume data, schematics). Pure + deterministic so it
-    runs with or without the LLM layer."""
+    runs with or without the LLM layer. ``focus`` narrows/prioritises results
+    to a keyword or instruction typed by the PM."""
     meta = ops.get("meta", {})
     risks = comp["risks"]
     completion = int(meta.get("completion", 0))
@@ -243,6 +246,23 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     todo.sort(key=lambda t: order.get(t.get("pri", "low"), 3))
     todo = todo[:12]
+
+    # PM-typed focus: keep items matching any focus word first; only filter a
+    # section if it still has matches, so we never blank the strategy out.
+    if focus and focus.strip():
+        toks = [w for w in re.split(r"\W+", focus.lower()) if len(w) > 2]
+
+        def _matches(item: dict) -> bool:
+            blob = " ".join(str(v) for v in item.values()).lower()
+            return any(t in blob for t in toks)
+
+        if toks:
+            mm = [m for m in mitigation if _matches(m)]
+            pp = [p for p in predicted if _matches(p)]
+            tt = [t for t in todo if _matches(t)]
+            mitigation = mm or mitigation
+            predicted = pp or predicted
+            todo = tt or todo
 
     return {
         "mitigation": mitigation,

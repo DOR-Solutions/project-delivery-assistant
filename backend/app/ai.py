@@ -57,9 +57,10 @@ async def extract_insights(name: str, text: str) -> dict:
     except Exception:
         return heuristic_extract(name, text)
 
-async def ai_strategy(context: str) -> dict | None:
+async def ai_strategy(context: str, instruction: str | None = None) -> dict | None:
     """Ask Claude to synthesise a grounded mitigation strategy from project
     context (KPIs, risk register, bag-volume signals and ingested documents).
+    ``instruction`` is an optional PM steer (e.g. "focus on HBS3 commissioning").
     Returns parsed JSON, or None so the caller can fall back to the engine."""
     if not ai_available():
         return None
@@ -67,12 +68,13 @@ async def ai_strategy(context: str) -> dict | None:
               '"mitigation":[{"title":"short","detail":"1-2 sentences","owner":"role","priority":"critical|high|medium"}],'
               '"predicted_risks":[{"title":"short","likelihood":1-5,"impact":1-5,"rationale":"why, grounded in the data"}],'
               '"todo":[{"text":"PM action","detail":"1 sentence","owner":"role","priority":"critical|high|medium"}]}')
+    steer = f"\n\nPM INSTRUCTION (prioritise this): {instruction}" if instruction and instruction.strip() else ""
     prompt = (UMP_DOMAIN +
               "\n\nYou are MAX. Using ONLY the project context below (documents, lessons learned, "
               "bag-volume data, risk register, schedule), produce a delivery mitigation strategy, "
               "predict the emerging risks, and write a prioritised to-do list for the project manager. "
               "Ground every point in the supplied data; cite document names where relevant. "
-              "Return ONLY JSON matching: " + schema + "\n\n=== PROJECT CONTEXT ===\n" + context[:11000])
+              "Return ONLY JSON matching: " + schema + steer + "\n\n=== PROJECT CONTEXT ===\n" + context[:11000])
     try:
         raw = await ask(prompt, max_tokens=2000)
         m = re.search(r"\{[\s\S]*\}", raw)

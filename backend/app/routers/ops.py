@@ -175,18 +175,19 @@ def _strategy_context(s: dict, docs: list[dict]) -> str:
 
 
 @router.get("/strategy")
-async def strategy(project_id: str, db: Session = Depends(get_db)):
+async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_db)):
     """Synthesise mitigation strategy, predicted risks and a PM to-do list,
     grounded in the project's risk register, bag data and ingested documents.
+    ``focus`` is an optional PM instruction to steer/narrow the strategy.
     Uses Claude when available; falls back to the deterministic engine."""
     ops = _ops_for(project_id, db)
     comp = engine.compute_ops(ops)
     docs = _docs_for(project_id, db)
     forecast = {"directs": engine.forecast_directs(T5_DIRECTS)} if project_id == "t5-baggage-programme" else {}
-    base = engine.generate_strategy(ops, comp, docs, forecast)
+    base = engine.generate_strategy(ops, comp, docs, forecast, focus=focus)
 
     s = _project_summary(project_id, ops)
-    enhanced = await ai.ai_strategy(_strategy_context(s, docs))
+    enhanced = await ai.ai_strategy(_strategy_context(s, docs), instruction=focus)
     if enhanced:
         return {
             "ai": True,
