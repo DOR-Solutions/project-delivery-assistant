@@ -6,6 +6,7 @@ from ..database import get_db
 from .. import models
 from .. import engine
 from .. import portfolio
+from .. import schedule as schedule_mod
 from .. import ai
 from ..seed import T5_DIRECTS, T5_MITIGATION
 
@@ -131,6 +132,18 @@ def foresight(db: Session = Depends(get_db)):
                 "forecast": f"Utilisation {s['kpis']['utilisation']}% — congestion risk on peak days.",
                 "owner": "Operations",
             })
+        # schedule slippage from the look-ahead
+        la = engine.compute_lookahead(schedule_mod.get_lookahead(pid, portfolio.PROJECTS_META.get(pid, {})))
+        sm = la["summary"]
+        if sm["critical"] or sm["worst_variance"] <= -7:
+            predictions.append({
+                "project": s["name"], "terminal": s["terminal"],
+                "title": "Look-ahead schedule slippage",
+                "score": 10 + sm["critical"] * 3 + abs(min(0, sm["worst_variance"])),
+                "forecast": f"{sm['critical']} critical-path and {sm['slipping']} slipping activities in the 6-week look-ahead "
+                            f"(worst {abs(sm['worst_variance'])}d behind baseline).",
+                "owner": "Planning / VI",
+            })
     # Synergy detection: projects sharing a risk area / contractor and gate window
     by_area: dict[str, list] = {}
     for pid, s in summaries.items():
@@ -185,7 +198,9 @@ async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_d
     comp = engine.compute_ops(ops)
     docs = _docs_for(project_id, db)
     forecast = {"directs": engine.forecast_directs(T5_DIRECTS)} if project_id == "t5-baggage-programme" else {}
-    base = engine.generate_strategy(ops, comp, docs, forecast, focus=focus)
+    la = engine.compute_lookahead(schedule_mod.get_lookahead(project_id, ops.get("meta", {})))
+    sched_risks = engine.lookahead_risks(la["activities"])
+    base = engine.generate_strategy(ops, comp, docs, forecast, focus=focus, extra_risks=sched_risks)
 
     s = _project_summary(project_id, ops)
     enhanced = await ai.ai_strategy(_strategy_context(s, docs), instruction=focus)
@@ -235,6 +250,29 @@ def strategy_pptx(plan: PlanExport):
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         headers={"Content-Disposition": f'attachment; filename="MAX_{safe}_Mitigation_Plan.pptx"'},
     )
+
+
+@router.get("/lookahead")
+def lookahead(project_id: str, weeks: int = 6, db: Session = Depends(get_db)):
+    """P6-style look-ahead: near-term, <100% activities with float & baseline
+    slippage, grouped by WBS, plus schedule-driven predicted risks."""
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    acts = schedule_mod.get_lookahead(project_id, meta)
+    res = engine.compute_lookahead(acts, weeks=weeks)
+    # group by WBS in computed order
+    groups: list[dict] = []
+    index: dict[str, dict] = {}
+    for a in res["activities"]:
+        g = index.get(a["wbs"])
+        if not g:
+            g = {"wbs": a["wbs"], "activities": []}
+            index[a["wbs"]] = g
+            groups.append(g)
+        g["activities"].append(a)
+    return {"name": meta.get("name", project_id), "summary": res["summary"],
+            "activities": res["activities"], "wbs_groups": groups,
+            "disciplines": schedule_mod.DISCIPLINES,
+            "risks": engine.lookahead_risks(res["activities"])}
 
 
 @router.get("/psl")

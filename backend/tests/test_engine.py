@@ -59,3 +59,23 @@ def test_whatif():
     assert stressed["utilisation"] > base["utilisation"]
     assert stressed["risk_index"] == "High"
     assert stressed["sat_date_shift"] >= base["sat_date_shift"]
+
+def test_lookahead():
+    from datetime import date
+    acts = [
+        {"id": "A1", "name": "Critical job", "wbs": "W", "discipline": "COM", "pct": 20,
+         "start": "2026-06-16", "finish": "2026-07-10", "bl_finish": "2026-06-30", "total_float": -5},
+        {"id": "A2", "name": "On track", "wbs": "W", "discipline": "DOC", "pct": 0,
+         "start": "2026-06-20", "finish": "2026-06-25", "bl_finish": "2026-06-27", "total_float": 30},
+        {"id": "A3", "name": "Done", "wbs": "W", "discipline": "DOC", "pct": 100,
+         "start": "2026-06-18", "finish": "2026-06-19", "bl_finish": "2026-06-19", "total_float": 5},
+        {"id": "A4", "name": "Beyond window", "wbs": "W", "discipline": "DOC", "pct": 0,
+         "start": "2026-12-01", "finish": "2026-12-10", "bl_finish": "2026-12-10", "total_float": 5},
+    ]
+    res = engine.compute_lookahead(acts, weeks=6, as_of=date(2026, 6, 16))
+    ids = [a["id"] for a in res["activities"]]
+    assert "A3" not in ids and "A4" not in ids       # 100% and out-of-window excluded
+    assert res["summary"]["critical"] == 1            # A1 negative float
+    assert res["activities"][0]["id"] == "A1"         # critical sorted first
+    risks = engine.lookahead_risks(res["activities"])
+    assert any("Critical job" in r["title"] for r in risks)

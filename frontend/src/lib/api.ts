@@ -43,6 +43,19 @@ export interface SynergyOpp {
   saving: number; shared_overhead: number; merged_schedule: number; recommendation: string;
 }
 export interface SynergyOut { currency: string; opportunities: SynergyOpp[]; total_saving: number; }
+export interface LookAheadActivity {
+  id: string; name: string; wbs: string; discipline: string; pct: number; remaining: number;
+  start: string; finish: string; bl_finish: string; total_float: number;
+  preds: string[]; succs: string[]; variance_days: number; critical: boolean; slipping: boolean; status: string;
+}
+export interface LookAheadOut {
+  name: string;
+  summary: { total: number; critical: number; slipping: number; on_track: number; worst_variance: number; by_discipline: Record<string, number>; as_of: string; window_end: string; weeks: number };
+  activities: LookAheadActivity[];
+  wbs_groups: { wbs: string; activities: LookAheadActivity[] }[];
+  disciplines: Record<string, string>;
+  risks: { title: string; rationale: string; band: string; score: number }[];
+}
 export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
 export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
 export interface StrategyOut {
@@ -87,6 +100,7 @@ export const api = {
   foresight: () => get<ForesightOut>("/ops/foresight"),
   budget: (pid: string) => get<BudgetOut>(`/ops/budget?project_id=${pid}`),
   synergy: () => get<SynergyOut>("/ops/synergy"),
+  lookahead: (pid: string, weeks = 6) => get<LookAheadOut>(`/ops/lookahead?project_id=${pid}&weeks=${weeks}`),
   psl: (category = "", q = "") => get<PslOut>(`/ops/psl?category=${encodeURIComponent(category)}&q=${encodeURIComponent(q)}`),
   strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
   exportPptx: async (plan: any): Promise<Blob> => {

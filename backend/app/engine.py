@@ -165,6 +165,57 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
     return {"utilisation": util, "projected_completion": completion,
             "risk_index": idx, "sat_date_shift": shift}
 
+# ---------- look-ahead schedule (P6-style) ----------
+def compute_lookahead(activities: list[dict], weeks: int = 6, as_of: date | None = None) -> dict:
+    """Apply the 6-week / <100% look-ahead filter and flag baseline slippage
+    and critical-path (float ≤ 0) activities, like the VI weekly review."""
+    today = as_of or date(2026, 6, 16)
+    window_end = today + timedelta(weeks=weeks)
+    out = []
+    for a in activities:
+        if a.get("pct", 0) >= 100:
+            continue
+        start = date.fromisoformat(a["start"])
+        if start > window_end:
+            continue
+        finish = date.fromisoformat(a["finish"])
+        blf = date.fromisoformat(a["bl_finish"])
+        variance = (blf - finish).days          # negative = finishing later than baseline
+        tf = a.get("total_float", 0)
+        critical = tf <= 0
+        slipping = variance < 0
+        status = "critical" if critical else "slipping" if slipping else "on_track"
+        out.append({**a, "variance_days": variance, "critical": critical, "slipping": slipping, "status": status})
+    rank = {"critical": 0, "slipping": 1, "on_track": 2}
+    out.sort(key=lambda x: (rank[x["status"]], x["variance_days"], x["total_float"]))
+    by_disc: dict[str, int] = {}
+    for a in out:
+        by_disc[a["discipline"]] = by_disc.get(a["discipline"], 0) + 1
+    summary = {
+        "total": len(out),
+        "critical": len([a for a in out if a["critical"]]),
+        "slipping": len([a for a in out if a["slipping"]]),
+        "on_track": len([a for a in out if a["status"] == "on_track"]),
+        "worst_variance": min([a["variance_days"] for a in out], default=0),
+        "by_discipline": by_disc,
+        "as_of": today.isoformat(), "window_end": window_end.isoformat(), "weeks": weeks,
+    }
+    return {"summary": summary, "activities": out}
+
+
+def lookahead_risks(activities: list[dict]) -> list[dict]:
+    """Derive predicted risks from slipping / critical look-ahead activities."""
+    risks = []
+    for a in activities:
+        if a.get("critical") or a.get("variance_days", 0) <= -7:
+            impact = 4 if a.get("critical") else 3
+            likelihood = 4
+            score = likelihood * impact
+            risks.append({"title": f"Schedule slip: {a['name']}", "likelihood": likelihood, "impact": impact,
+                          "score": score, "band": risk_band(score), "source": "P6 look-ahead",
+                          "rationale": f"{a['id']} ({a['discipline']}) — {abs(a['variance_days'])}d behind baseline, total float {a['total_float']}."})
+    return risks[:6]
+
 # ---------- cross-project synergy ----------
 def compute_synergies(items: list[dict], currency: str = "£") -> dict:
     """Find suppliers used on more than one project and the schedule cross-overs
@@ -265,7 +316,7 @@ def compute_budget(budget: dict, completion: int) -> dict:
 
 # ---------- strategy synthesis (deterministic) ----------
 def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | None = None,
-                      focus: str | None = None) -> dict:
+                      focus: str | None = None, extra_risks: list[dict] | None = None) -> dict:
     """Synthesise mitigation strategy, predicted risks and a PM to-do list from
     the risk register, bag-throughput signals and ingested documents
     (lessons learned, bag-volume data, schematics). Pure + deterministic so it
@@ -299,6 +350,9 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
                                   "likelihood": 3, "impact": 3, "score": 9, "band": "high",
                                   "source": d.get("name", "document"),
                                   "rationale": ins.get("detail", "")[:160]})
+    # schedule-driven predicted risks (from the P6 look-ahead)
+    if extra_risks:
+        predicted.extend(extra_risks)
     # de-dup by title, keep highest score, sort
     seen: dict[str, dict] = {}
     for p in predicted:
@@ -334,6 +388,10 @@ def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | 
         mitigation_actions.append({"area": "Schedule", "action": "Recover to next gate",
                                    "mitigation": f"Re-baseline the critical path; ring-fence resource on the lowest workstream to lift {completion}% toward gate exit.",
                                    "responsibility": "Programme", "priority": "high"})
+    if extra_risks:
+        mitigation_actions.append({"area": "Look-ahead", "action": "Recover slipping critical-path activities",
+                                   "mitigation": "Expedite activities behind baseline / on negative float in the 6-week look-ahead; re-sequence with VI at the weekly review.",
+                                   "responsibility": "Planning / VI", "priority": "high"})
     for d in docs:
         for ins in (d.get("insights") or []):
             if ins.get("type") in ("action", "decision"):
