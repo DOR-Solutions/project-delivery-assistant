@@ -43,6 +43,8 @@ export interface SynergyOpp {
   saving: number; shared_overhead: number; merged_schedule: number; recommendation: string;
 }
 export interface SynergyOut { currency: string; opportunities: SynergyOpp[]; total_saving: number; }
+export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
+export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
 export interface StrategyOut {
   ai: boolean;
   narrative: string;
@@ -85,6 +87,7 @@ export const api = {
   foresight: () => get<ForesightOut>("/ops/foresight"),
   budget: (pid: string) => get<BudgetOut>(`/ops/budget?project_id=${pid}`),
   synergy: () => get<SynergyOut>("/ops/synergy"),
+  psl: (category = "", q = "") => get<PslOut>(`/ops/psl?category=${encodeURIComponent(category)}&q=${encodeURIComponent(q)}`),
   strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
   exportPptx: async (plan: any): Promise<Blob> => {
     const r = await fetch(`${BASE}/ops/strategy/pptx`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plan) });

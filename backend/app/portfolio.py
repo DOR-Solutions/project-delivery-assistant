@@ -227,3 +227,43 @@ SCHEDULES: dict[str, tuple[str, str]] = {
 
 def get_schedule(pid: str) -> tuple[str, str] | None:
     return SCHEDULES.get(pid)
+
+
+# Preferred Supplier List — procurement-authorised suppliers by category.
+PSL_CATEGORIES = [
+    "Building & Construction", "Software & Application", "Mitigations & Business Change",
+    "Training", "Equipment", "Consultation", "Signage", "DIY",
+]
+
+PSL = [
+    {"name": "Wise", "category": "Building & Construction", "contact": "Account Manager", "email": "projects@wise.example", "phone": "020 7946 0011", "services": "Civils, fit-out & structural works", "framework": "HAL-CW-114", "rating": 4.6},
+    {"name": "Mace", "category": "Building & Construction", "contact": "Framework Lead", "email": "hal.framework@mace.example", "phone": "020 7946 0024", "services": "Major construction & construction PM", "framework": "HAL-CW-021", "rating": 4.7},
+    {"name": "ISG", "category": "Building & Construction", "contact": "Account Manager", "email": "aviation@isg.example", "phone": "020 7946 0033", "services": "Fit-out & refurbishment", "framework": "HAL-CW-088", "rating": 4.3},
+
+    {"name": "Vanderlande Software", "category": "Software & Application", "contact": "CST Lead", "email": "controls@vanderlande.example", "phone": "020 7946 0052", "services": "BHS control software (SCADA/PLC), CST", "framework": "HAL-SW-201", "rating": 4.5},
+    {"name": "BEUMER Group", "category": "Software & Application", "contact": "Software PM", "email": "software@beumer.example", "phone": "020 7946 0058", "services": "Sortation control & optimisation software", "framework": "HAL-SW-205", "rating": 4.4},
+    {"name": "SITA", "category": "Software & Application", "contact": "Account Manager", "email": "baggage@sita.example", "phone": "020 7946 0061", "services": "Airport IT & baggage messaging (BagMessage)", "framework": "HAL-SW-210", "rating": 4.2},
+
+    {"name": "ABC Operations", "category": "Mitigations & Business Change", "contact": "Head of Operations", "email": "ops@abc.example", "phone": "020 7946 0070", "services": "Baggage mitigation staffing & operational cover", "framework": "HAL-OPS-330", "rating": 4.6},
+    {"name": "DHL Supply Chain", "category": "Mitigations & Business Change", "contact": "ITO Manager", "email": "esr@dhl.example", "phone": "020 7946 0074", "services": "ESR & integrated resource pool", "framework": "HAL-OPS-331", "rating": 4.5},
+    {"name": "Aretian Consulting", "category": "Mitigations & Business Change", "contact": "Transition Lead", "email": "change@aretian.example", "phone": "020 7946 0079", "services": "Business change & transition management", "framework": "HAL-BC-340", "rating": 4.1},
+
+    {"name": "Heathrow Academy", "category": "Training", "contact": "Training Coordinator", "email": "academy@hal.example", "phone": "020 7946 0081", "services": "Operational, safety & airside training", "framework": "HAL-TR-401", "rating": 4.8},
+    {"name": "RTITB", "category": "Training", "contact": "Account Manager", "email": "mhe@rtitb.example", "phone": "020 7946 0085", "services": "MHE & licence-to-operate training", "framework": "HAL-TR-405", "rating": 4.3},
+    {"name": "Babcock Training", "category": "Training", "contact": "Account Manager", "email": "skills@babcock.example", "phone": "020 7946 0089", "services": "Technical skills & competency", "framework": "HAL-TR-409", "rating": 4.2},
+
+    {"name": "Honeywell", "category": "Equipment", "contact": "Account Manager", "email": "fire@honeywell.example", "phone": "020 7946 0091", "services": "Fire-alarm & building systems", "framework": "HAL-EQ-501", "rating": 4.4},
+    {"name": "Smiths Detection", "category": "Equipment", "contact": "HBS Lead", "email": "hbs@smithsdetection.example", "phone": "020 7946 0095", "services": "HBS / EDS screening equipment (Std 3)", "framework": "HAL-EQ-505", "rating": 4.6},
+    {"name": "Crisplant (BEUMER)", "category": "Equipment", "contact": "Account Manager", "email": "crisplant@beumer.example", "phone": "020 7946 0098", "services": "Carousels, tilt-tray & make-up equipment", "framework": "HAL-EQ-508", "rating": 4.3},
+
+    {"name": "Arup", "category": "Consultation", "contact": "Project Director", "email": "aviation@arup.example", "phone": "020 7946 0101", "services": "Engineering & systems consultancy", "framework": "HAL-CON-601", "rating": 4.7},
+    {"name": "Mott MacDonald", "category": "Consultation", "contact": "Programme Lead", "email": "assurance@mottmac.example", "phone": "020 7946 0105", "services": "Programme, cost & assurance advisory", "framework": "HAL-CON-605", "rating": 4.5},
+    {"name": "Atkins", "category": "Consultation", "contact": "Account Manager", "email": "design@atkins.example", "phone": "020 7946 0109", "services": "Design & technical advisory", "framework": "HAL-CON-609", "rating": 4.4},
+
+    {"name": "Pearce Signs", "category": "Signage", "contact": "Account Manager", "email": "wayfinding@pearcesigns.example", "phone": "020 7946 0112", "services": "Wayfinding & statutory signage", "framework": "HAL-SG-701", "rating": 4.2},
+    {"name": "ASL Group", "category": "Signage", "contact": "Account Manager", "email": "signage@aslgroup.example", "phone": "020 7946 0116", "services": "Digital & static signage", "framework": "HAL-SG-705", "rating": 4.1},
+
+    {"name": "RS Components", "category": "DIY", "contact": "Trade Account", "email": "trade@rs.example", "phone": "020 7946 0121", "services": "Electrical, fixings & components", "framework": "HAL-DIY-801", "rating": 4.3},
+    {"name": "Screwfix Trade", "category": "DIY", "contact": "Trade Desk", "email": "trade@screwfix.example", "phone": "020 7946 0125", "services": "Tools & consumables", "framework": "HAL-DIY-805", "rating": 4.4},
+    {"name": "Rexel", "category": "DIY", "contact": "Account Manager", "email": "wholesale@rexel.example", "phone": "020 7946 0129", "services": "Electrical wholesale", "framework": "HAL-DIY-809", "rating": 4.0},
+]

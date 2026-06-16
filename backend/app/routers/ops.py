@@ -237,6 +237,19 @@ def strategy_pptx(plan: PlanExport):
     )
 
 
+@router.get("/psl")
+def psl(category: str = "", q: str = ""):
+    """Preferred Supplier List — procurement-authorised suppliers by category."""
+    rows = portfolio.PSL
+    if category:
+        rows = [s for s in rows if s["category"] == category]
+    if q:
+        ql = q.lower()
+        rows = [s for s in rows if ql in s["name"].lower() or ql in s["services"].lower() or ql in s["category"].lower()]
+    counts = {c: len([s for s in portfolio.PSL if s["category"] == c]) for c in portfolio.PSL_CATEGORIES}
+    return {"categories": portfolio.PSL_CATEGORIES, "counts": counts, "total": len(portfolio.PSL), "suppliers": rows}
+
+
 @router.get("/synergy")
 def synergy(db: Session = Depends(get_db)):
     """Cross-project synergies: shared suppliers + schedule overlaps and the
