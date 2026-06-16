@@ -50,6 +50,13 @@ export interface StrategyOut {
   todo: { id?: string; text: string; detail?: string; owner: string; pri?: string; priority?: string; tag?: string }[];
   inputs: { documents: number; risks: number; bag_days: number; forecast_days: number };
 }
+export interface BudgetSupplier { name: string; budget: number; spent: number; remaining: number; pct_spent: number; status: string; }
+export interface BudgetOut {
+  has_budget: boolean; name: string; currency?: string;
+  bac?: number; ac?: number; allocated?: number; ev?: number; cpi?: number; eac?: number; vac?: number;
+  overspend?: number; pct_spent?: number; completion?: number; verdict?: string; rag?: string;
+  suppliers?: BudgetSupplier[];
+}
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 
 export const api = {
@@ -69,6 +76,7 @@ export const api = {
   whatif: (project_id: string, bag_volume_pct: number, crew_on_shift: number, extra_completion: number) =>
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
+  budget: (pid: string) => get<BudgetOut>(`/ops/budget?project_id=${pid}`),
   strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
   exportPptx: async (plan: any): Promise<Blob> => {
     const r = await fetch(`${BASE}/ops/strategy/pptx`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plan) });

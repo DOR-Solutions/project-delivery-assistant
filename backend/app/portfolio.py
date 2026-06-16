@@ -179,3 +179,37 @@ def get_ops(pid: str) -> dict | None:
         }
     ops["meta"] = meta
     return ops
+
+
+# Submitted project cost, broken down by supplier (budget vs spent-to-date).
+BUDGETS: dict[str, dict] = {
+    "t5-baggage-programme": {"total": 4_200_000, "currency": "£", "suppliers": [
+        {"name": "Vanderlande", "budget": 2_000_000, "spent": 1_750_000},
+        {"name": "Dalkia", "budget": 900_000, "spent": 820_000},
+        {"name": "Honeywell", "budget": 500_000, "spent": 460_000},
+        {"name": "VI Commissioning", "budget": 800_000, "spent": 570_000},
+    ]},
+    "t1-reclaim": {"total": 1_800_000, "currency": "£", "suppliers": [
+        {"name": "Wise (main contractor)", "budget": 1_100_000, "spent": 520_000},
+        {"name": "Dalkia (controls)", "budget": 700_000, "spent": 280_000},
+    ]},
+    "t2-reclaim-upgrade": {"total": 2_600_000, "currency": "£", "suppliers": [
+        {"name": "Vanderlande", "budget": 1_600_000, "spent": 980_000},
+        {"name": "Dalkia", "budget": 600_000, "spent": 420_000},
+        {"name": "Wise", "budget": 400_000, "spent": 200_000},
+    ]},
+    "t3-hbs-refresh": {"total": 1_500_000, "currency": "£", "suppliers": [
+        {"name": "Vanderlande", "budget": 1_000_000, "spent": 700_000},
+        {"name": "DfT assurance lab", "budget": 300_000, "spent": 180_000},
+        {"name": "Software (Std 3)", "budget": 200_000, "spent": 120_000},
+    ]},
+    "t4-ebs-resilience": {"total": 3_000_000, "currency": "£", "suppliers": [
+        {"name": "Engineering (design)", "budget": 1_200_000, "spent": 450_000},
+        {"name": "Feasibility consultant", "budget": 800_000, "spent": 330_000},
+        {"name": "PMO / programme", "budget": 1_000_000, "spent": 0},
+    ]},
+}
+
+
+def get_budget(pid: str) -> dict | None:
+    return BUDGETS.get(pid)

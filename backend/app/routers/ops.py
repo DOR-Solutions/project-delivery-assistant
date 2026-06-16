@@ -237,6 +237,21 @@ def strategy_pptx(plan: PlanExport):
     )
 
 
+@router.get("/budget")
+def budget(project_id: str, db: Session = Depends(get_db)):
+    """Cost / earned-value view for a project: submitted budget split by
+    supplier, spend-to-date, forecast out-turn and in-budget verdict."""
+    b = portfolio.get_budget(project_id)
+    if not b:
+        meta = portfolio.PROJECTS_META.get(project_id, {})
+        return {"has_budget": False, "name": meta.get("name", project_id)}
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    out = engine.compute_budget(b, int(meta.get("completion", 0)))
+    out["has_budget"] = True
+    out["name"] = meta.get("name", project_id)
+    return out
+
+
 @router.get("/impact")
 def impact(project_id: str, area: str, db: Session = Depends(get_db)):
     ops = _ops_for(project_id, db)

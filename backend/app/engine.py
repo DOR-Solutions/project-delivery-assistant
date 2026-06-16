@@ -165,6 +165,47 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
     return {"utilisation": util, "projected_completion": completion,
             "risk_index": idx, "sat_date_shift": shift}
 
+# ---------- budget / earned-value ----------
+def compute_budget(budget: dict, completion: int) -> dict:
+    """Earned-value view: given the submitted cost (split by supplier) and the
+    project's % complete, forecast the out-turn cost and whether the project
+    finishes in budget or needs an uplift, based on the burn rate so far."""
+    bac = budget.get("total", 0)                       # Budget At Completion (submitted cost)
+    suppliers = budget.get("suppliers", [])
+    ac = sum(s.get("spent", 0) for s in suppliers)     # Actual Cost to date
+    allocated = sum(s.get("budget", 0) for s in suppliers)
+    ev = bac * completion / 100.0                       # Earned Value (value of work done)
+    cpi = (ev / ac) if ac else 0                        # Cost Performance Index
+    eac = round(bac / cpi) if cpi else bac              # Estimate At Completion
+    vac = bac - eac                                     # Variance At Completion (neg = overspend)
+    overspend = max(0, eac - bac)
+    pct_spent = round(ac / bac * 100) if bac else 0
+
+    if cpi == 0:
+        verdict, rag = "Not yet started", "amber"
+    elif eac <= bac * 1.02:
+        verdict, rag = "On budget", "green"
+    elif eac <= bac * 1.10:
+        verdict, rag = "Minor overspend — manageable", "amber"
+    else:
+        verdict, rag = "Uplift / overspend needed", "red"
+
+    sup_out = []
+    for s in suppliers:
+        sb, ss = s.get("budget", 0), s.get("spent", 0)
+        sp = round(ss / sb * 100) if sb else 0
+        sup_out.append({"name": s.get("name", ""), "budget": sb, "spent": ss,
+                        "remaining": sb - ss, "pct_spent": sp,
+                        "status": "over" if ss > sb else "high" if sp >= 90 else "ok"})
+
+    return {
+        "currency": budget.get("currency", "£"),
+        "bac": bac, "ac": ac, "allocated": allocated,
+        "ev": round(ev), "cpi": round(cpi, 3), "eac": eac, "vac": vac,
+        "overspend": overspend, "pct_spent": pct_spent, "completion": completion,
+        "verdict": verdict, "rag": rag, "suppliers": sup_out,
+    }
+
 # ---------- strategy synthesis (deterministic) ----------
 def generate_strategy(ops: dict, comp: dict, docs: list[dict], forecast: dict | None = None,
                       focus: str | None = None) -> dict:
