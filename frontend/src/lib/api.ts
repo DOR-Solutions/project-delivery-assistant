@@ -36,6 +36,13 @@ export interface PortfolioProject { project_id: string; name: string; terminal: 
 export interface PortfolioOut { projects: PortfolioProject[]; rag_counts: { green: number; amber: number; red: number }; avg_completion: number; total_open_risks: number; total_critical: number; }
 export interface WhatIfOut { utilisation: number; projected_completion: number; risk_index: string; sat_date_shift: number; }
 export interface ForesightOut { predictions: any[]; synergies: any[]; }
+export interface SynergyOpp {
+  supplier: string;
+  projects: { id: string; name: string; terminal: string; budget: number; start: string; finish: string }[];
+  combined_budget: number; overlap: boolean; overlap_summary: string;
+  saving: number; shared_overhead: number; merged_schedule: number; recommendation: string;
+}
+export interface SynergyOut { currency: string; opportunities: SynergyOpp[]; total_saving: number; }
 export interface StrategyOut {
   ai: boolean;
   narrative: string;
@@ -77,6 +84,7 @@ export const api = {
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
   budget: (pid: string) => get<BudgetOut>(`/ops/budget?project_id=${pid}`),
+  synergy: () => get<SynergyOut>("/ops/synergy"),
   strategy: (pid: string, focus = "") => get<StrategyOut>(`/ops/strategy?project_id=${pid}&focus=${encodeURIComponent(focus)}`),
   exportPptx: async (plan: any): Promise<Blob> => {
     const r = await fetch(`${BASE}/ops/strategy/pptx`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plan) });

@@ -8,6 +8,7 @@ import Ingest from "./views/Ingest";
 import Dashboard from "./views/Dashboard";
 import Documents from "./views/Documents";
 import Foresight from "./views/Foresight";
+import Synergy from "./views/Synergy";
 import Strategy from "./views/Strategy";
 import Budget from "./views/Budget";
 import Forecast from "./views/Forecast";
@@ -79,6 +80,7 @@ export default function App() {
             {wsLink("/dashboard", "◇", "Dashboard", 1)}
             {wsLink("/documents", "▤", "Documents", 1)}
             {wsLink("/foresight", "✦", "Foresight")}
+            {wsLink("/synergy", "♻", "Synergy")}
             {wsLink("/strategy", "🧭", "Strategy")}
             {wsLink("/budget", "💷", "Budget")}
             {wsLink("/forecast", "📈", "Bag Forecast")}
@@ -102,6 +104,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard onOpen={setPid} />} />
           <Route path="/documents" element={<Documents pid={pid} />} />
           <Route path="/foresight" element={<Foresight onOpen={setPid} />} />
+          <Route path="/synergy" element={<Synergy onOpen={setPid} />} />
           <Route path="/strategy" element={<Strategy pid={pid} />} />
           <Route path="/budget" element={<Budget pid={pid} />} />
           <Route path="/forecast" element={<Forecast pid={pid} />} />

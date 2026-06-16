@@ -213,3 +213,17 @@ BUDGETS: dict[str, dict] = {
 
 def get_budget(pid: str) -> dict | None:
     return BUDGETS.get(pid)
+
+
+# Indicative delivery windows (start, finish) used to find schedule cross-overs.
+SCHEDULES: dict[str, tuple[str, str]] = {
+    "t5-baggage-programme": ("2026-05-01", "2026-07-31"),
+    "t1-reclaim": ("2026-06-15", "2026-10-30"),
+    "t2-reclaim-upgrade": ("2026-05-15", "2026-08-29"),
+    "t3-hbs-refresh": ("2026-06-01", "2026-08-15"),
+    "t4-ebs-resilience": ("2026-09-01", "2027-03-31"),
+}
+
+
+def get_schedule(pid: str) -> tuple[str, str] | None:
+    return SCHEDULES.get(pid)

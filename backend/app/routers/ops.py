@@ -237,6 +237,21 @@ def strategy_pptx(plan: PlanExport):
     )
 
 
+@router.get("/synergy")
+def synergy(db: Session = Depends(get_db)):
+    """Cross-project synergies: shared suppliers + schedule overlaps and the
+    recommended saving from combining resource across projects."""
+    items = []
+    for pid, meta in portfolio.PROJECTS_META.items():
+        b = portfolio.get_budget(pid)
+        sch = portfolio.get_schedule(pid)
+        if not b or not sch:
+            continue
+        items.append({"id": pid, "name": meta["name"], "terminal": meta["terminal"],
+                      "suppliers": b["suppliers"], "schedule": sch})
+    return engine.compute_synergies(items)
+
+
 @router.get("/budget")
 def budget(project_id: str, db: Session = Depends(get_db)):
     """Cost / earned-value view for a project: submitted budget split by

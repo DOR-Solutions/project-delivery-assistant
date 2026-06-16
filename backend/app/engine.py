@@ -165,6 +165,63 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
     return {"utilisation": util, "projected_completion": completion,
             "risk_index": idx, "sat_date_shift": shift}
 
+# ---------- cross-project synergy ----------
+def compute_synergies(items: list[dict], currency: str = "£") -> dict:
+    """Find suppliers used on more than one project and the schedule cross-overs
+    between those projects, then recommend the saving from combining them
+    (single mobilisation / shared crew / merged commissioning window)."""
+    def ov_days(a: tuple[str, str], b: tuple[str, str]) -> int:
+        s = max(date.fromisoformat(a[0]), date.fromisoformat(b[0]))
+        f = min(date.fromisoformat(a[1]), date.fromisoformat(b[1]))
+        return max(0, (f - s).days)
+
+    # group by the supplier's base name so "Dalkia" and "Dalkia (controls)" match
+    by_sup: dict[str, list[dict]] = {}
+    for it in items:
+        for sp in it.get("suppliers", []):
+            base = sp.get("name", "").split("(")[0].strip() or sp.get("name", "")
+            by_sup.setdefault(base, []).append(
+                {"id": it["id"], "name": it["name"], "terminal": it["terminal"],
+                 "budget": sp.get("budget", 0), "schedule": it["schedule"]})
+
+    opportunities = []
+    total = 0
+    for sup, projs in by_sup.items():
+        if len(projs) < 2:
+            continue
+        combined = sum(p["budget"] for p in projs)
+        maxb = max(p["budget"] for p in projs)
+        pairs = []
+        for i in range(len(projs)):
+            for j in range(i + 1, len(projs)):
+                d = ov_days(projs[i]["schedule"], projs[j]["schedule"])
+                if d > 0:
+                    pairs.append((projs[i]["terminal"], projs[j]["terminal"], d))
+        overlap = bool(pairs)
+        shared_overhead = round(0.10 * (combined - maxb))   # duplicate mobilisation / PM overhead
+        merged_schedule = round(0.05 * combined) if overlap else 0  # shared crew during overlap
+        saving = shared_overhead + merged_schedule
+        total += saving
+        if pairs:
+            osum = "; ".join(f"{a} & {b} overlap ~{round(d / 7)} wk" for a, b, d in pairs)
+        else:
+            osum = "No calendar overlap — sequential, but mobilisation/procurement still shareable"
+        terms = ", ".join(p["terminal"] for p in projs)
+        rec = (f"Procure {sup} as a single cross-project package across {terms}: one mobilisation and PM "
+               f"overhead instead of {len(projs)}. "
+               + ("Share the commissioning crew during the overlap and run a joint SAT/access window."
+                  if overlap else "Sequence the engagements back-to-back to keep the crew on site."))
+        opportunities.append({
+            "supplier": sup,
+            "projects": [{"id": p["id"], "name": p["name"], "terminal": p["terminal"],
+                          "budget": p["budget"], "start": p["schedule"][0], "finish": p["schedule"][1]} for p in projs],
+            "combined_budget": combined, "overlap": overlap, "overlap_summary": osum,
+            "saving": saving, "shared_overhead": shared_overhead, "merged_schedule": merged_schedule,
+            "recommendation": rec,
+        })
+    opportunities.sort(key=lambda o: -o["saving"])
+    return {"currency": currency, "opportunities": opportunities, "total_saving": total}
+
 # ---------- budget / earned-value ----------
 def compute_budget(budget: dict, completion: int) -> dict:
     """Earned-value view: given the submitted cost (split by supplier) and the
