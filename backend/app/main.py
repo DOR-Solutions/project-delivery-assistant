@@ -1,6 +1,8 @@
 import os
 import logging
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+load_dotenv()  # load backend/.env (MAXAI_ANTHROPIC_KEY, MAXAI_MODEL, …) if present
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
