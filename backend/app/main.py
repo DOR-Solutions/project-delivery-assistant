@@ -1,9 +1,12 @@
 import os
+import logging
+from datetime import datetime, timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
-from .routers import projects, documents, ops, ai_router
+from .routers import projects, documents, ops, ai_router, ingest
 from .seed import seed_db
+from . import ingest_watch
 
 Base.metadata.create_all(bind=engine)
 seed_db()
@@ -18,6 +21,23 @@ app.include_router(projects.router)
 app.include_router(documents.router)
 app.include_router(ops.router)
 app.include_router(ai_router.router)
+app.include_router(ingest.router)
+
+# Scheduled auto-ingest of the watched drop-zone (hourly by default).
+_scheduler = None
+if ingest_watch.auto_enabled():
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        ingest_watch.ensure_dirs()
+        _scheduler = BackgroundScheduler(daemon=True)
+        _scheduler.add_job(lambda: ingest_watch.scan(), "interval",
+                           minutes=ingest_watch.interval_minutes(), id="autoingest",
+                           next_run_time=datetime.now() + timedelta(seconds=8),
+                           max_instances=1, coalesce=True)
+        _scheduler.start()
+    except Exception as e:  # pragma: no cover - scheduler is best-effort
+        logging.getLogger("uvicorn").warning("Auto-ingest scheduler not started: %s", e)
+
 
 @app.get("/api/health")
 def health():

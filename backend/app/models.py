@@ -62,3 +62,13 @@ class BagDay(Base):
     day_type = Column(String, default="")
     breakdown = Column(JSON, default=dict)  # zone breakdown for mitigation
     project = relationship("Project", back_populates="bag_days")
+
+class IngestManifest(Base):
+    """Tracks files auto-ingested from the watched drop-zone (change detection)."""
+    __tablename__ = "ingest_manifest"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    path = Column(String, unique=True)        # path relative to the watch dir
+    sha1 = Column(String)                     # content hash for dedup
+    project_id = Column(String)
+    document_id = Column(String, nullable=True)
+    ingested_at = Column(DateTime, default=datetime.utcnow)

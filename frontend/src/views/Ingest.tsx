@@ -5,9 +5,21 @@ export default function Ingest({ pid }: { pid: string }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const [auto, setAuto] = useState<any>(null);
+  const [scanning, setScanning] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const load = () => api.documents(pid).then(setDocs).catch(() => {});
-  useEffect(() => { load(); setLog([]); }, [pid]);
+  const loadAuto = () => api.ingestStatus().then(setAuto).catch(() => {});
+  useEffect(() => { load(); loadAuto(); setLog([]); }, [pid]);
+
+  const scanNow = async () => {
+    setScanning(true);
+    try {
+      const r = await api.ingestScan();
+      setLog((l) => [`⟳ Drop-zone scan: ${r.ingested} new, ${r.updated} updated, ${r.skipped} unchanged`, ...l]);
+    } catch (e) { setLog((l) => [`✗ Scan failed — ${e}`, ...l]); }
+    setScanning(false); load(); loadAuto();
+  };
 
   const onUpload = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -32,6 +44,33 @@ export default function Ingest({ pid }: { pid: string }) {
         Drop live or historic project data — programme briefs, risk registers, bag-count exports,
         commissioning logs. MAX parses PDF · DOCX · XLSX · CSV server-side and extracts structured insight.
       </p>
+
+      {auto && (
+        <div className="card" style={{ borderLeft: "3px solid var(--teal)", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div>
+              <div className="panel-h" style={{ marginBottom: 4 }}>Automated drop-zone ingest</div>
+              <div style={{ fontSize: 12, color: "var(--ink)" }}>
+                {auto.auto_enabled
+                  ? <>Watching every <b>{auto.interval_minutes} min</b> · </>
+                  : <>Auto-scan off · </>}
+                <b>{auto.files_tracked}</b> file(s) tracked · last scan {auto.last_scan ? new Date(auto.last_scan).toLocaleString("en-GB") : "—"}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--gray)", fontFamily: "var(--fm)", marginTop: 4 }}>
+                Drop files into <b>{auto.watch_dir}/&lt;terminal&gt;/</b> (T1–T5). New &amp; changed files auto-ingest; reports refresh and snapshot.
+              </div>
+            </div>
+            <button className="btn" onClick={scanNow} disabled={scanning}>{scanning ? "Scanning…" : "↻ Scan now"}</button>
+          </div>
+          {auto.by_project && Object.keys(auto.by_project).length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {Object.entries(auto.by_project).map(([p, n]: any) => (
+                <span key={p} className="pill" style={{ background: "var(--card2)", color: "var(--gray)" }}>{p}: {n}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="card" style={{ textAlign: "center", border: "1.5px dashed var(--bor)", cursor: "pointer", padding: 36 }}
         onClick={() => fileRef.current?.click()}>

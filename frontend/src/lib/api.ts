@@ -87,6 +87,8 @@ export const api = {
   byTerminal: () => get<Record<string, Project[]>>("/projects/by-terminal"),
   createProject: (name: string, terminal: string) => post<Project>("/projects", { name, terminal }),
   documents: (pid: string) => get<Doc[]>(`/documents?project_id=${pid}`),
+  ingestStatus: () => get<any>("/ingest/status"),
+  ingestScan: () => post<any>("/ingest/scan", {}),
   uploadDoc: async (pid: string, file: File): Promise<Doc> => {
     const fd = new FormData(); fd.append("project_id", pid); fd.append("file", file);
     const r = await fetch(`${BASE}/documents/upload`, { method: "POST", body: fd });
