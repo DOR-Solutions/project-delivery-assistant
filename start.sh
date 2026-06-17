@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
-# Launch MAX.ai: backend API on :8000 (background) + frontend UI on :5173.
+# Launch MAX.ai as a single service: the backend (FastAPI) serves the built
+# frontend AND the API on one port (8000) — robust for Codespaces forwarding.
 set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-# Backend deps (idempotent) + start
+# Backend deps (idempotent)
 cd "$ROOT/backend"
 [ -d .venv ] || { python3 -m venv .venv && ./.venv/bin/pip install --upgrade pip -q; }
-# Always sync requirements (fast when satisfied; picks up new deps like python-pptx)
 ./.venv/bin/pip install -r requirements.txt -q
-echo "==> Starting backend API on http://localhost:8000 …"
-./.venv/bin/uvicorn app.main:app --port 8000 > /tmp/maxai-backend.log 2>&1 &
-sleep 2
 
-# Frontend deps (idempotent) + start
+# Build the frontend (the backend serves the static build)
 cd "$ROOT/frontend"
 [ -d node_modules ] || npm install
-echo "==> Starting frontend UI on http://localhost:5173 …"
-echo "    (open the forwarded port 5173 when prompted)"
-npm run dev
+echo "==> Building frontend…"
+npm run build
+
+# Serve everything from the backend on :8000 (0.0.0.0 so the forwarder can reach it)
+cd "$ROOT/backend"
+echo "==> MAX.ai is live on http://localhost:8000  — open the forwarded PORT 8000"
+exec ./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000

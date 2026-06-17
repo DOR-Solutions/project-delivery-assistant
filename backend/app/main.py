@@ -44,3 +44,20 @@ if ingest_watch.auto_enabled():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "max-ai"}
+
+
+# Serve the built frontend (single-port deployment) when frontend/dist exists.
+_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+if os.path.isdir(_DIST):
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+    _assets = os.path.join(_DIST, "assets")
+    if os.path.isdir(_assets):
+        app.mount("/assets", StaticFiles(directory=_assets), name="assets")
+
+    @app.get("/{full_path:path}")
+    def _spa(full_path: str):
+        target = os.path.join(_DIST, full_path)
+        if full_path and os.path.isfile(target):
+            return FileResponse(target)
+        return FileResponse(os.path.join(_DIST, "index.html"))
