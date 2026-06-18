@@ -229,6 +229,47 @@ def get_schedule(pid: str) -> tuple[str, str] | None:
     return SCHEDULES.get(pid)
 
 
+# Resource roster per project: who each supplier has on site + day-rate (£/day).
+RESOURCES: dict[str, list[dict]] = {
+    "t5-baggage-programme": [
+        {"supplier": "VI (Vanderlande)", "role": "Project Manager", "count": 2, "day_rate": 650},
+        {"supplier": "VI (Vanderlande)", "role": "Commissioning Engineer", "count": 3, "day_rate": 550},
+        {"supplier": "Wise", "role": "HBS Technician", "count": 2, "day_rate": 400},
+        {"supplier": "ABC", "role": "Team Lead", "count": 1, "day_rate": 350},
+        {"supplier": "ABC", "role": "Operations", "count": 9, "day_rate": 220},
+        {"supplier": "Dalkia", "role": "Controls Engineer", "count": 2, "day_rate": 600},
+        {"supplier": "Honeywell", "role": "Fire Systems Engineer", "count": 1, "day_rate": 580},
+    ],
+    "t1-reclaim": [
+        {"supplier": "Wise", "role": "Project Manager", "count": 1, "day_rate": 650},
+        {"supplier": "Wise", "role": "Civils Operative", "count": 6, "day_rate": 240},
+        {"supplier": "Dalkia", "role": "Controls Engineer", "count": 2, "day_rate": 600},
+        {"supplier": "ABC", "role": "Operations", "count": 3, "day_rate": 220},
+    ],
+    "t2-reclaim-upgrade": [
+        {"supplier": "VI (Vanderlande)", "role": "Project Manager", "count": 1, "day_rate": 650},
+        {"supplier": "VI (Vanderlande)", "role": "Commissioning Engineer", "count": 2, "day_rate": 550},
+        {"supplier": "Dalkia", "role": "Conveyor Technician", "count": 3, "day_rate": 380},
+        {"supplier": "ABC", "role": "Operations", "count": 5, "day_rate": 220},
+    ],
+    "t3-hbs-refresh": [
+        {"supplier": "VI (Vanderlande)", "role": "Project Manager", "count": 1, "day_rate": 650},
+        {"supplier": "Smiths Detection", "role": "EDS Engineer", "count": 2, "day_rate": 560},
+        {"supplier": "DfT assurance lab", "role": "Assurance Specialist", "count": 1, "day_rate": 700},
+        {"supplier": "ABC", "role": "Operations", "count": 4, "day_rate": 220},
+    ],
+    "t4-ebs-resilience": [
+        {"supplier": "Arup", "role": "Design Engineer", "count": 3, "day_rate": 620},
+        {"supplier": "Mott MacDonald", "role": "Programme Lead", "count": 1, "day_rate": 720},
+        {"supplier": "ABC", "role": "Business Analyst", "count": 2, "day_rate": 480},
+    ],
+}
+
+
+def get_resources(pid: str) -> list[dict] | None:
+    return RESOURCES.get(pid)
+
+
 # Preferred Supplier List — procurement-authorised suppliers by category.
 PSL_CATEGORIES = [
     "Building & Construction", "Software & Application", "Mitigations & Business Change",

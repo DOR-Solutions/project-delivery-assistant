@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from typing import Any
@@ -273,6 +274,22 @@ def lookahead(project_id: str, weeks: int = 6, db: Session = Depends(get_db)):
             "activities": res["activities"], "wbs_groups": groups,
             "disciplines": schedule_mod.DISCIPLINES,
             "risks": engine.lookahead_risks(res["activities"])}
+
+
+@router.get("/resources")
+def resources(project_id: str, db: Session = Depends(get_db)):
+    """Resource roster + cost for a project (headcount per supplier with day-rates)."""
+    res = portfolio.get_resources(project_id)
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    sch = portfolio.get_schedule(project_id)
+    weeks = 1
+    if sch:
+        fin = date.fromisoformat(sch[1])
+        weeks = max(1, round((fin - date(2026, 6, 16)).days / 7))
+    out = engine.compute_resources(res or [], weeks)
+    out["name"] = meta.get("name", project_id)
+    out["has_resources"] = bool(res)
+    return out
 
 
 @router.get("/psl")

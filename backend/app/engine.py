@@ -165,6 +165,33 @@ def whatif(comp: dict, meta: dict, bag_volume_pct: float, crew: int, extra_compl
     return {"utilisation": util, "projected_completion": completion,
             "risk_index": idx, "sat_date_shift": shift}
 
+# ---------- resource management ----------
+def compute_resources(resources: list[dict], weeks: int = 1) -> dict:
+    """Roll up the on-site resource roster: headcount and cost by supplier/role,
+    plus daily / weekly / projected-to-completion cost."""
+    lines, by_sup, by_role = [], {}, {}
+    headcount = daily = 0
+    for r in resources:
+        cnt, rate = int(r.get("count", 0)), int(r.get("day_rate", 0))
+        dc = cnt * rate
+        sup, role = r.get("supplier", ""), r.get("role", "")
+        lines.append({"supplier": sup, "role": role, "count": cnt, "day_rate": rate, "daily_cost": dc})
+        headcount += cnt; daily += dc
+        s = by_sup.setdefault(sup, {"supplier": sup, "headcount": 0, "daily_cost": 0, "roles": []})
+        s["headcount"] += cnt; s["daily_cost"] += dc; s["roles"].append(f"{cnt}× {role}")
+        rl = by_role.setdefault(role, {"role": role, "count": 0, "daily_cost": 0})
+        rl["count"] += cnt; rl["daily_cost"] += dc
+    weeks = max(1, weeks)
+    weekly = daily * 5
+    return {
+        "lines": lines,
+        "by_supplier": sorted(by_sup.values(), key=lambda x: -x["daily_cost"]),
+        "by_role": sorted(by_role.values(), key=lambda x: -x["daily_cost"]),
+        "headcount": headcount, "daily_cost": daily, "weekly_cost": weekly,
+        "projected_cost": weekly * weeks, "weeks_remaining": weeks,
+        "suppliers": len(by_sup), "currency": "£",
+    }
+
 # ---------- look-ahead schedule (P6-style) ----------
 def compute_lookahead(activities: list[dict], weeks: int = 6, as_of: date | None = None) -> dict:
     """Apply the 6-week / <100% look-ahead filter and flag baseline slippage

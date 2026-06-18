@@ -107,3 +107,61 @@ th{font-family:var(--fm);font-size:9px;color:var(--gray);letter-spacing:.14em;te
 td{padding:9px 10px;border-bottom:1px solid var(--bor);font-size:12px;color:var(--ink)}
 
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.wf-out{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.sliders{grid-template-columns:1fr}}
+
+/* =========================================================
+   Visual polish layer — depth, gradients, motion (additive)
+   ========================================================= */
+body{
+  background:radial-gradient(1200px 600px at 85% -5%, rgba(0,158,132,.06), transparent 60%),
+             linear-gradient(180deg, var(--bg), #E7EEF4);
+  background-attachment:fixed;
+}
+html[data-theme="dark"] body{
+  background:radial-gradient(1200px 600px at 85% -5%, rgba(0,158,132,.10), transparent 60%),
+             linear-gradient(180deg, #070C12, #0A1018);
+}
+
+/* Sidebar: soft elevation + smoother items */
+aside{box-shadow:1px 0 0 var(--bor), 8px 0 28px rgba(16,40,59,.04);backdrop-filter:saturate(1.1)}
+.brand-mark{box-shadow:0 6px 16px rgba(0,158,132,.40);}
+.ws,.proj{transition:background .16s ease,color .16s ease,box-shadow .16s ease;border-radius:0 9px 9px 0;margin-right:8px}
+.ws.active{box-shadow:inset 0 0 0 1px var(--bor)}
+.ws:hover,.proj:hover{transform:translateX(1px)}
+.search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--tdim)}
+
+/* Headings */
+h1{letter-spacing:-.4px;font-weight:800}
+.eyebrow{color:var(--teal);font-weight:600;opacity:.9}
+
+/* Cards: depth + hover lift */
+.card{box-shadow:0 1px 2px rgba(16,40,59,.05),0 2px 8px rgba(16,40,59,.05);transition:box-shadow .2s ease,transform .2s ease;}
+.card:hover{box-shadow:0 8px 28px rgba(16,40,59,.10)}
+html[data-theme="dark"] .card{box-shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.3)}
+
+/* KPI tiles: subtle gradient, top accent, lift */
+.kpi{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--card),var(--card2));transition:transform .2s ease,box-shadow .2s ease}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),#00B894)}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(16,40,59,.12)}
+.kpi .val{letter-spacing:-.5px}
+
+/* Buttons */
+.btn{box-shadow:0 2px 10px rgba(0,158,132,.32);transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,158,132,.42)}
+.btn:active{transform:translateY(0)}
+
+/* Pills & rows */
+.pill{letter-spacing:.05em;border-radius:999px}
+.row-card{transition:transform .15s ease,box-shadow .15s ease}
+.row-card:hover{transform:translateX(2px);box-shadow:0 6px 18px rgba(16,40,59,.08)}
+
+/* Tables: hover highlight + sticky header */
+thead th{position:sticky;top:0;background:var(--card);z-index:1}
+tbody tr{transition:background .12s ease}
+tbody tr:hover{background:var(--tdim)}
+
+/* Donut/gate niceties */
+.gate{transition:transform .15s ease}
+.gate:hover{transform:translateY(-2px)}
+
+/* Nav icons a touch bolder */
+.ws-ic{filter:saturate(1.1)}

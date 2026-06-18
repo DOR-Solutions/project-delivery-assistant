@@ -56,6 +56,13 @@ export interface LookAheadOut {
   disciplines: Record<string, string>;
   risks: { title: string; rationale: string; band: string; score: number }[];
 }
+export interface ResourcesOut {
+  has_resources: boolean; name: string; currency: string;
+  headcount: number; daily_cost: number; weekly_cost: number; projected_cost: number; weeks_remaining: number; suppliers: number;
+  lines: { supplier: string; role: string; count: number; day_rate: number; daily_cost: number }[];
+  by_supplier: { supplier: string; headcount: number; daily_cost: number; roles: string[] }[];
+  by_role: { role: string; count: number; daily_cost: number }[];
+}
 export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
 export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
 export interface StrategyOut {
@@ -101,6 +108,7 @@ export const api = {
     post<WhatIfOut>("/ops/whatif", { project_id, bag_volume_pct, crew_on_shift, extra_completion }),
   foresight: () => get<ForesightOut>("/ops/foresight"),
   budget: (pid: string) => get<BudgetOut>(`/ops/budget?project_id=${pid}`),
+  resources: (pid: string) => get<ResourcesOut>(`/ops/resources?project_id=${pid}`),
   synergy: () => get<SynergyOut>("/ops/synergy"),
   lookahead: (pid: string, weeks = 6) => get<LookAheadOut>(`/ops/lookahead?project_id=${pid}&weeks=${weeks}`),
   psl: (category = "", q = "") => get<PslOut>(`/ops/psl?category=${encodeURIComponent(category)}&q=${encodeURIComponent(q)}`),
