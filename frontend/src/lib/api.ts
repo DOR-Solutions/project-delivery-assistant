@@ -63,6 +63,9 @@ export interface ResourcesOut {
   by_supplier: { supplier: string; headcount: number; daily_cost: number; roles: string[] }[];
   by_role: { role: string; count: number; daily_cost: number }[];
 }
+export interface SysNode { id: string; name: string; capacity: number; status: string; share_pct: number; bags: number; }
+export interface SystemMapOut { nodes: SysNode[]; edges: { from: string; to: string }[]; }
+export interface ImpactOut { area: { id: string; name: string; capacity: number }; share_pct: number; bags_affected: number; downstream: string[]; severity: string; }
 export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
 export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
 export interface StrategyOut {
@@ -118,7 +121,8 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.blob();
   },
-  impact: (pid: string, area: string) => get<any>(`/ops/impact?project_id=${pid}&area=${area}`),
+  systemMap: (pid: string) => get<SystemMapOut>(`/ops/systemmap?project_id=${pid}`),
+  impact: (pid: string, area: string) => get<ImpactOut>(`/ops/impact?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),
   chat: (pid: string, message: string, history: any[]) => post<{ reply: string; ai: boolean }>("/ai/chat", { project_id: pid, message, history }),

@@ -335,6 +335,26 @@ def budget(project_id: str, db: Session = Depends(get_db)):
     return out
 
 
+@router.get("/systemmap")
+def systemmap(project_id: str, db: Session = Depends(get_db)):
+    """Baggage flow map: areas (with share/status/bags) + downstream edges,
+    so the UI can render the MFD and model out-of-service impact."""
+    ops = _ops_for(project_id, db)
+    comp = engine.compute_ops(ops)
+    areas = ops.get("areas") or []
+    total = sum(a["capacity"] for a in areas) or 1
+    last_actual = comp["last"]["actual"]
+    nodes = [{
+        "id": a["id"], "name": a["name"], "capacity": a["capacity"],
+        "status": a.get("status", "in-service"),
+        "share_pct": round(a["capacity"] / total * 100),
+        "bags": round(last_actual * a["capacity"] / total),
+    } for a in areas]
+    edges = [{"from": src, "to": d} for src, dests in engine.DOWNSTREAM.items()
+             for d in dests if any(n["id"] == d for n in nodes) and any(n["id"] == src for n in nodes)]
+    return {"nodes": nodes, "edges": edges}
+
+
 @router.get("/impact")
 def impact(project_id: str, area: str, db: Session = Depends(get_db)):
     ops = _ops_for(project_id, db)
