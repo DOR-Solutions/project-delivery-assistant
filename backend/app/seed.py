@@ -127,5 +127,33 @@ def seed_db():
             db.add(models.BagDay(project_id="t5-baggage-programme", date=d["date"], day="", series="throughput",
                    planned=d["planned"], actual=d["actual"], capacity=d["capacity"]))
         db.commit()
+        _seed_documents(db)
     finally:
         db.close()
+
+
+def _seed_documents(db):
+    """Parse and ingest the bundled project documents (backend/seed_docs/) so
+    MAX has real source material to answer from out of the box."""
+    import os
+    from .parsing import parse_file
+    from . import ai
+    docs_dir = os.path.join(os.path.dirname(__file__), "..", "seed_docs")
+    if not os.path.isdir(docs_dir):
+        return
+    for fn in sorted(os.listdir(docs_dir)):
+        path = os.path.join(docs_dir, fn)
+        if not os.path.isfile(path) or fn.startswith("."):
+            continue
+        if db.query(models.Document).filter(models.Document.name == fn).first():
+            continue
+        try:
+            with open(path, "rb") as f:
+                text, kind = parse_file(fn, f.read())
+            ins = ai.heuristic_extract(fn, text)
+            db.add(models.Document(id=uuid.uuid4().hex[:12], project_id="t5-baggage-programme",
+                   name=fn, kind=kind, text=text[:120000], summary=ins.get("summary", ""),
+                   topics=ins.get("topics", []), insights=ins.get("insights", []), status="done"))
+            db.commit()
+        except Exception:
+            db.rollback()  # never let one bad file block startup
