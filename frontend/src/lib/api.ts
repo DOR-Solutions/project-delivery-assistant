@@ -63,17 +63,25 @@ export interface ResourcesOut {
   by_supplier: { supplier: string; headcount: number; daily_cost: number; roles: string[] }[];
   by_role: { role: string; count: number; daily_cost: number }[];
 }
-export interface RosterAgg { name: string; shifts: number; hours: number; cost: number; headcount: number; pct_cost: number; }
+export interface RosterAgg { name: string; shifts: number; hours: number; cost: number; charge: number; headcount: number; pct_cost: number; }
 export interface RosterDay { date: string; day: string; headcount: number; shifts: number; hours: number; cost: number; }
-export interface RosterStaff { employee: string; shifts: number; hours: number; cost: number; zones: number; rate: number; }
+export interface RosterStaff { employee: string; shifts: number; hours: number; charge: number; zones: number; rate: number; }
+export interface RateCard {
+  supplier: string; title: string; as_of: string; source: string; currency: string;
+  day_window: number[]; night_window: number[];
+  labour: { role: string; day: number; night: number; th_day: number; th_night: number }[];
+  equipment: { item: string; day_rate: number }[];
+  role_map: Record<string, string>; notes: string;
+}
 export interface RosterSummary {
   meta: { source: string; cost_code: string; location: string; programme: string };
+  rate_card: { supplier: string; as_of: string };
   date_from: string; date_to: string; operating_days: number; calendar_elapsed: number; days_in_month: number;
-  shifts: number; headcount: number; total_hours: number; total_cost: number;
-  avg_shift_hours: number; avg_hourly_rate: number; avg_daily_cost: number; avg_daily_headcount: number;
-  projected_op_days: number; projected_month_cost: number; annualised_cost: number;
+  shifts: number; headcount: number; total_hours: number; total_cost: number; total_charge: number; uplift_pct: number;
+  avg_shift_hours: number; avg_pay_rate: number; avg_charge_rate: number; avg_daily_charge: number; avg_daily_headcount: number;
+  projected_op_days: number; projected_month_charge: number; annualised_charge: number;
 }
-export interface RosterOut { summary: RosterSummary; by_zone: RosterAgg[]; by_role: RosterAgg[]; by_band: RosterAgg[]; daily: RosterDay[]; top_staff: RosterStaff[]; }
+export interface RosterOut { summary: RosterSummary; rate_card: RateCard; by_zone: RosterAgg[]; by_role: RosterAgg[]; by_band: RosterAgg[]; daily: RosterDay[]; top_staff: RosterStaff[]; }
 
 export interface MfdSystemInfo { id: string; name: string; terminal: string; lines: number; }
 export interface MfdNode { id: string; name: string; capacity: number; status: string; stage: number; kind: string; share_pct: number; bags: number; }

@@ -81,10 +81,10 @@ export default function CommandCenter({ pid }: { pid: string }) {
         <div className="card" onClick={() => nav("/roster")} title="Open the UMP roster"
           style={{ marginTop: 12, cursor: "pointer", borderLeft: "4px solid #0E7C86", display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
           <span className="pill" style={{ background: "#0E7C8622", color: "#0E7C86", fontSize: 12 }}>🪪 Manual mitigation (UMP) · T5 PILZ</span>
-          <Stat label="Cost (MTD)" val={"£" + Math.round(mit.total_cost).toLocaleString()} color="#10283B" />
+          <Stat label="Charge cost (MTD, ABC)" val={"£" + Math.round(mit.total_charge).toLocaleString()} color="#10283B" />
           <Stat label="Staff deployed" val={String(mit.headcount)} color="#0E7C86" />
           <Stat label="Hours rostered" val={mit.total_hours.toLocaleString()} color="#2F62C4" />
-          <Stat label={`Forecast (${mit.days_in_month}d month)`} val={"£" + Math.round(mit.projected_month_cost).toLocaleString()} color="#D4374C" />
+          <Stat label={`Forecast (${mit.days_in_month}d month)`} val={"£" + Math.round(mit.projected_month_charge).toLocaleString()} color="#D4374C" />
           <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--gray)" }}>
             {mit.operating_days} op-days · {mit.date_from} → {mit.date_to} <span style={{ color: "var(--teal)" }}>open ↗</span>
           </span>
