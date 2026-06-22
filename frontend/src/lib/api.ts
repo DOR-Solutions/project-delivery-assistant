@@ -63,6 +63,18 @@ export interface ResourcesOut {
   by_supplier: { supplier: string; headcount: number; daily_cost: number; roles: string[] }[];
   by_role: { role: string; count: number; daily_cost: number }[];
 }
+export interface RosterAgg { name: string; shifts: number; hours: number; cost: number; headcount: number; pct_cost: number; }
+export interface RosterDay { date: string; day: string; headcount: number; shifts: number; hours: number; cost: number; }
+export interface RosterStaff { employee: string; shifts: number; hours: number; cost: number; zones: number; rate: number; }
+export interface RosterSummary {
+  meta: { source: string; cost_code: string; location: string; programme: string };
+  date_from: string; date_to: string; operating_days: number; calendar_elapsed: number; days_in_month: number;
+  shifts: number; headcount: number; total_hours: number; total_cost: number;
+  avg_shift_hours: number; avg_hourly_rate: number; avg_daily_cost: number; avg_daily_headcount: number;
+  projected_op_days: number; projected_month_cost: number; annualised_cost: number;
+}
+export interface RosterOut { summary: RosterSummary; by_zone: RosterAgg[]; by_role: RosterAgg[]; by_band: RosterAgg[]; daily: RosterDay[]; top_staff: RosterStaff[]; }
+
 export interface MfdSystemInfo { id: string; name: string; terminal: string; lines: number; }
 export interface MfdNode { id: string; name: string; capacity: number; status: string; stage: number; kind: string; share_pct: number; bags: number; }
 export interface MfdMap { id: string; name: string; terminal: string; baseline_bags: number; nodes: MfdNode[]; edges: { from: string; to: string }[]; stages: { stage: number; label: string }[]; }
@@ -131,6 +143,7 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.blob();
   },
+  roster: () => get<RosterOut>(`/ops/roster`),
   mfdSystems: () => get<{ systems: MfdSystemInfo[] }>(`/ops/mfd/systems`),
   mfdMap: (system: string) => get<MfdMap>(`/ops/mfd/map?system=${system}`),
   mfdSimulate: (system: string, areas: string[]) => get<MfdSim>(`/ops/mfd/simulate?system=${system}&areas=${areas.join(",")}`),

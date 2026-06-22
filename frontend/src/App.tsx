@@ -15,6 +15,7 @@ import PSL from "./views/PSL";
 import Strategy from "./views/Strategy";
 import Budget from "./views/Budget";
 import Resources from "./views/Resources";
+import Roster from "./views/Roster";
 import Forecast from "./views/Forecast";
 import RiskEngine from "./views/RiskEngine";
 import Chat from "./views/Chat";
@@ -90,6 +91,7 @@ export default function App() {
             {wsLink("/strategy", "🧭", "Strategy")}
             {wsLink("/budget", "💷", "Budget")}
             {wsLink("/resources", "👷", "Resources")}
+            {wsLink("/roster", "🪪", "UMP Roster")}
             {wsLink("/psl", "📇", "PSL")}
             {wsLink("/forecast", "📈", "Bag Forecast")}
             {wsLink("/risk", "⚠", "Risk Engine")}
@@ -118,6 +120,7 @@ export default function App() {
           <Route path="/strategy" element={<Strategy pid={pid} />} />
           <Route path="/budget" element={<Budget pid={pid} />} />
           <Route path="/resources" element={<Resources pid={pid} />} />
+          <Route path="/roster" element={<Roster />} />
           <Route path="/psl" element={<PSL />} />
           <Route path="/forecast" element={<Forecast pid={pid} />} />
           <Route path="/risk" element={<RiskEngine pid={pid} />} />

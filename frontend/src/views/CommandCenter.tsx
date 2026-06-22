@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, Summary, WhatIfOut } from "../lib/api";
+import { useNavigate } from "react-router-dom";
+import { api, Summary, WhatIfOut, RosterSummary } from "../lib/api";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
   Chart, CategoryScale, LinearScale, BarElement, PointElement, LineElement,
@@ -12,7 +13,9 @@ const sev = (b: string) => ({ critical: "#D4374C", high: "#B0720A", medium: "#C9
 const wsColor = (p: number) => (p >= 75 ? "#178A43" : p >= 45 ? "#B0720A" : "#D4374C");
 
 export default function CommandCenter({ pid }: { pid: string }) {
+  const nav = useNavigate();
   const [s, setS] = useState<Summary | null>(null);
+  const [mit, setMit] = useState<RosterSummary | null>(null);
   const [err, setErr] = useState("");
   const [win, setWin] = useState(7);
 
@@ -24,7 +27,11 @@ export default function CommandCenter({ pid }: { pid: string }) {
 
   useEffect(() => {
     setErr(""); setS(null);
-    api.summary(pid).then((d) => { setS(d); setCrew(d.crew_on_shift || d.crew_baseline || 0); }).catch((e) => setErr(String(e)));
+    setMit(null);
+    api.summary(pid).then((d) => {
+      setS(d); setCrew(d.crew_on_shift || d.crew_baseline || 0);
+      if (d.terminal === "T5") api.roster().then((r) => setMit(r.summary)).catch(() => {});
+    }).catch((e) => setErr(String(e)));
   }, [pid]);
 
   useEffect(() => {
@@ -69,6 +76,20 @@ export default function CommandCenter({ pid }: { pid: string }) {
           </div>
         ))}
       </div>
+
+      {mit && (
+        <div className="card" onClick={() => nav("/roster")} title="Open the UMP roster"
+          style={{ marginTop: 12, cursor: "pointer", borderLeft: "4px solid #0E7C86", display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
+          <span className="pill" style={{ background: "#0E7C8622", color: "#0E7C86", fontSize: 12 }}>🪪 Manual mitigation (UMP) · T5 PILZ</span>
+          <Stat label="Cost (MTD)" val={"£" + Math.round(mit.total_cost).toLocaleString()} color="#10283B" />
+          <Stat label="Staff deployed" val={String(mit.headcount)} color="#0E7C86" />
+          <Stat label="Hours rostered" val={mit.total_hours.toLocaleString()} color="#2F62C4" />
+          <Stat label={`Forecast (${mit.days_in_month}d month)`} val={"£" + Math.round(mit.projected_month_cost).toLocaleString()} color="#D4374C" />
+          <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--gray)" }}>
+            {mit.operating_days} op-days · {mit.date_from} → {mit.date_to} <span style={{ color: "var(--teal)" }}>open ↗</span>
+          </span>
+        </div>
+      )}
 
       <div className="grid" style={{ gridTemplateColumns: "320px 1fr", marginTop: 14 }}>
         <div className="card">
@@ -196,6 +217,15 @@ export default function CommandCenter({ pid }: { pid: string }) {
           )) : <div className="card">No tasks queued.</div>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Stat({ label, val, color }: { label: string; val: string; color: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: .4, color: "var(--gray)" }}>{label}</div>
+      <div style={{ fontFamily: "var(--fh)", fontWeight: 800, fontSize: 19, color }}>{val}</div>
     </div>
   );
 }

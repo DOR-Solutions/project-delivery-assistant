@@ -7,6 +7,7 @@ from ..database import get_db
 from .. import models
 from .. import engine
 from .. import mfd
+from .. import roster as roster_mod
 from .. import portfolio
 from .. import schedule as schedule_mod
 from .. import ai
@@ -334,6 +335,13 @@ def budget(project_id: str, db: Session = Depends(get_db)):
     out["has_budget"] = True
     out["name"] = meta.get("name", project_id)
     return out
+
+
+@router.get("/roster")
+def roster():
+    """T5 PILZ Mitigation (UMP) roster: deployment plan and cost — KPIs, cost by
+    zone/role, daily staffing & spend, shift bands, top resources, month projection."""
+    return roster_mod.report()
 
 
 @router.get("/mfd/systems")
