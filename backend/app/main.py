@@ -6,7 +6,7 @@ load_dotenv()  # load backend/.env (MAXAI_ANTHROPIC_KEY, MAXAI_MODEL, …) if pr
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
-from .routers import projects, documents, ops, ai_router, ingest
+from .routers import projects, documents, ops, ai_router, ingest, meetings
 from .seed import seed_db
 from . import ingest_watch
 
@@ -24,6 +24,7 @@ app.include_router(documents.router)
 app.include_router(ops.router)
 app.include_router(ai_router.router)
 app.include_router(ingest.router)
+app.include_router(meetings.router)
 
 # Scheduled auto-ingest of the watched drop-zone (hourly by default).
 _scheduler = None

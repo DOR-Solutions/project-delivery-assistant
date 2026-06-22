@@ -128,8 +128,98 @@ def seed_db():
                    planned=d["planned"], actual=d["actual"], capacity=d["capacity"]))
         db.commit()
         _seed_documents(db)
+        _seed_meetings(db)
     finally:
         db.close()
+
+
+# Curated PILZ stakeholder-session minutes (transcripts loaded from data/meetings/).
+MEETINGS_SEED = [
+    {"file": "pilz_2026-05-05.txt", "date": "2026-05-05",
+     "title": "PILZ Project Delivery — Stakeholder Session (05 May)", "chair": "Andy Groom",
+     "attendees": ["Andy Groom", "Simon Peddie", "Matt Davies", "Fred Tasker", "Ali Zakaria",
+                   "Gurpreet Banga (DHL)", "Pratik Darjee", "Russell Wooding", "Jack Nye",
+                   "Henry Gray", "Phil Georgiou", "Fiona Lacey"],
+     "summary": ("Weekly stakeholder session reviewing delivery, transfers, HBS & screening "
+                 "performance and forward actions. Programme re-sequenced to prioritise SCA 24 and "
+                 "TRA 74 for earlier mitigation release; Area 25 go-live (Pilz→Siemens) confirmed "
+                 "for the night of 12 May into 13 May. HBS operating close to capacity — outages "
+                 "propagate rapidly to check-in."),
+     "topics": ["PILZ", "HBS", "Screening", "Transfers", "Reclaim", "Go-live"],
+     "decisions": [
+         "Programme re-sequenced to prioritise SCA 24 and TRA 74 ahead of Areas 21, 26, 40 and 7.",
+         "Area 25 go-live confirmed for the night of 12 May into the morning of Wed 13 May.",
+         "'Go-live' defined as the technical switch from Pilz to Siemens safety system — not BAU recovery."],
+     "actions": [
+         {"ref": "A1", "text": "Issue clear stakeholder comms differentiating project go-live from BAU operations", "owner": "Andrew Groom", "due": "", "status": "open"},
+         {"ref": "A2", "text": "Align comms language with BA Ops sensitivities", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
+         {"ref": "A3", "text": "Ensure areas 264 & 265 are not isolated concurrently", "owner": "Matt Davies", "due": "", "status": "open"},
+         {"ref": "A4", "text": "Reinstate structured review of performance data in the weekly agenda", "owner": "Andrew Groom", "due": "", "status": "open"},
+         {"ref": "A5", "text": "Include L2/L3 screening capacity in performance reports", "owner": "Fred Tasker", "due": "", "status": "open"},
+         {"ref": "A8", "text": "Finalise BA staffing and logistics for Reclaim 11", "owner": "Andrew Groom / Simon Peddie", "due": "2026-06-05", "status": "open"},
+         {"ref": "A10", "text": "Progress RTG and readiness for 21 May trial", "owner": "Russell Wooding", "due": "2026-05-21", "status": "open"}]},
+    {"file": "pilz_2026-05-12.txt", "date": "2026-05-12",
+     "title": "PILZ Project Delivery — Stakeholder Session (12 May)", "chair": "Andy Groom",
+     "attendees": ["Andy Groom", "Simon Peddie", "Matt Davies", "Fred Tasker", "Ali Zakaria",
+                   "Gurpreet Banga (DHL)", "Pratik Darjee", "Russell Wooding", "Jack Nye",
+                   "Henry Gray", "Phil Georgiou", "Fiona Lacey"],
+     "summary": ("Deployment-readiness and safety sign-off session. RTG against Tipper 0025 returned "
+                 "'No Go' on 12 May; no revised go-live date until O&M alignment complete and SAT "
+                 "formally issued. BTA 0025 subsequently passed SAT and went live on 14 May. O&M "
+                 "engagement gap recognised — earlier involvement and a mandatory pre-RTG walkthrough "
+                 "agreed. Baggage performance stable (only 2 bags not loaded)."),
+     "topics": ["PILZ", "SAT", "Commissioning", "HBS", "Mitigation", "Go-live"],
+     "decisions": [
+         "RTG against Tipper 0025 confirmed 'No Go' on 12 May 2026.",
+         "No revised go-live date until O&M alignment is complete and SAT sign-off formally issued.",
+         "A single accountable Heathrow authority must confirm safety sign-off; extra meetings do not replace accountability.",
+         "BTA 0025 passed SAT and went live on the morning of Thursday 14 May 2026."],
+     "actions": [
+         {"ref": "", "text": "Earlier O&M involvement in safety inspections and quality reviews; mandatory pre-RTG familiarisation walkthrough", "owner": "Project / O&M", "due": "", "status": "open"},
+         {"ref": "", "text": "Continue monitoring unexplained delays / wayward bags", "owner": "Operations", "due": "", "status": "open"},
+         {"ref": "", "text": "Continue short, targeted ABC mitigation deployments during peaks; retain wayfinding support", "owner": "Andrew Groom", "due": "", "status": "open"},
+         {"ref": "", "text": "Address RTG process breakdown (planning/communication/governance) — last-minute RTG deemed unacceptable", "owner": "Henry Gray", "due": "", "status": "open"}]},
+    {"file": "pilz_2026-05-19.txt", "date": "2026-05-19",
+     "title": "PILZ Project Delivery — Stakeholder Session (19 May)", "chair": "Andy Groom",
+     "attendees": ["Andy Groom", "Matt Davies", "Henry Gray", "Michael Packham",
+                   "Russell Wooding", "Ali Zakaria", "Jack Nye", "Ray Jafri"],
+     "summary": ("Project in a stand-down condition awaiting formal IRT direction (decision due 12:00, "
+                 "19 May) on continuation vs return to BAU. TRA 74 installation on hold; teams ready to "
+                 "mobilise on approval. Delayed passenger baggage reduced from ~5,000 to ~4,000. A "
+                 "commissioning governance breach was raised — VI commissioned the previous evening "
+                 "without authorisation — requiring a formal internal investigation."),
+     "topics": ["PILZ", "Stand-down", "Commissioning", "HBS", "Reclaim"],
+     "decisions": [
+         "Project remains in stand-down; continuation / return-to-BAU pending IRT decision at 12:00 on Tue 19 May.",
+         "Final areas SCA 74, SCA 24 and TRA 74 brought forward to accelerate delivery and enable early relinquishment of mitigations.",
+         "Formal VI internal review/investigation required into the unauthorised commissioning activity."],
+     "actions": [
+         {"ref": "A4", "text": "Issue clear stakeholder comms differentiating project go-live from BAU", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
+         {"ref": "A5", "text": "Align comms language with BA Ops sensitivities", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
+         {"ref": "A11", "text": "Finalise BA staffing and logistics for Reclaim 11", "owner": "Andrew Groom / Simon Peddie", "due": "2026-06-05", "status": "open"},
+         {"ref": "—", "text": "Investigate the breakdown in communications behind the unauthorised commissioning", "owner": "Henry Gray", "due": "", "status": "open"}]},
+]
+
+
+def _seed_meetings(db):
+    """Seed the bundled PILZ stakeholder-session minutes as project meetings."""
+    import os
+    mdir = os.path.join(os.path.dirname(__file__), "data", "meetings")
+    for m in MEETINGS_SEED:
+        if db.query(models.Meeting).filter(models.Meeting.title == m["title"]).first():
+            continue
+        path = os.path.join(mdir, m["file"])
+        try:
+            transcript = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
+            db.add(models.Meeting(
+                id=uuid.uuid4().hex[:12], project_id="t5-baggage-programme",
+                title=m["title"], meeting_date=m["date"], chair=m["chair"],
+                attendees=m["attendees"], transcript=transcript[:120000],
+                summary=m["summary"], topics=m["topics"], decisions=m["decisions"],
+                actions=m["actions"], source="seed"))
+            db.commit()
+        except Exception:
+            db.rollback()
 
 
 def _seed_documents(db):

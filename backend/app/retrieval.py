@@ -83,9 +83,40 @@ def _doc_passages(db, pid: str) -> list[tuple[str, str]]:
     return out
 
 
+def _meeting_passages(db, pid: str) -> list[tuple[str, str]]:
+    """Index recorded meetings: summary, decisions, actions and transcript
+    chunks — so Ask MAX answers from what was said and agreed in meetings."""
+    out: list[tuple[str, str]] = []
+    for m in db.query(models.Meeting).filter(models.Meeting.project_id == pid).all():
+        src = f"Meeting: {m.title}" + (f" ({m.meeting_date})" if m.meeting_date else "")
+        if m.attendees:
+            out.append((f"Attendees: {', '.join(m.attendees)}." + (f" Chair: {m.chair}." if m.chair else ""), src))
+        if m.summary:
+            out.append((m.summary, src))
+        for d in (m.decisions or []):
+            out.append((f"Decision: {d}", src))
+        for a in (m.actions or []):
+            owner = f" (owner: {a.get('owner')})" if a.get("owner") else ""
+            due = f" due {a.get('due')}" if a.get("due") else ""
+            status = f" [{a.get('status')}]" if a.get("status") else ""
+            out.append((f"Action {a.get('ref','')}: {a.get('text','')}{owner}{due}{status}".strip(), src))
+        chunks = re.split(r"(?<=[.!?])\s+|\n+", m.transcript or "")
+        buf = ""
+        for ch in chunks:
+            ch = ch.strip()
+            if not ch:
+                continue
+            buf = (buf + " " + ch).strip()
+            if len(buf) >= 140:
+                out.append((buf[:400], src)); buf = ""
+        if buf:
+            out.append((buf[:400], src))
+    return out
+
+
 def search(db, pid: str, question: str, k: int = 10):
     qk = set(_kw(question))
-    corpus = _facts(db, pid) + _doc_passages(db, pid)
+    corpus = _facts(db, pid) + _doc_passages(db, pid) + _meeting_passages(db, pid)
     scored = []
     for text, src in corpus:
         tk = _kw(text)

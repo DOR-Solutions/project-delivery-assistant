@@ -13,6 +13,7 @@ class Project(Base):
     risks = relationship("Risk", back_populates="project", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="project", cascade="all, delete-orphan")
     bag_days = relationship("BagDay", back_populates="project", cascade="all, delete-orphan")
+    meetings = relationship("Meeting", back_populates="project", cascade="all, delete-orphan")
 
 class Document(Base):
     __tablename__ = "documents"
@@ -62,6 +63,27 @@ class BagDay(Base):
     day_type = Column(String, default="")
     breakdown = Column(JSON, default=dict)  # zone breakdown for mitigation
     project = relationship("Project", back_populates="bag_days")
+
+class Meeting(Base):
+    """A recorded project meeting / stakeholder session and its transcript.
+    Structured minutes (attendees, decisions, actions) are auto-extracted so the
+    record becomes searchable source material for Ask MAX."""
+    __tablename__ = "meetings"
+    id = Column(String, primary_key=True)
+    project_id = Column(String, ForeignKey("projects.id"))
+    title = Column(String)
+    meeting_date = Column(String, default="")     # ISO date
+    chair = Column(String, default="")
+    attendees = Column(JSON, default=list)         # [name]
+    transcript = Column(Text, default="")
+    summary = Column(Text, default="")
+    topics = Column(JSON, default=list)
+    decisions = Column(JSON, default=list)         # [str]
+    actions = Column(JSON, default=list)           # [{ref,text,owner,due,status}]
+    source = Column(String, default="manual")      # manual | upload | seed
+    created_at = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="meetings")
+
 
 class IngestManifest(Base):
     """Tracks files auto-ingested from the watched drop-zone (change detection)."""

@@ -119,6 +119,15 @@ export interface BudgetOut {
   overspend?: number; pct_spent?: number; completion?: number; verdict?: string; rag?: string;
   suppliers?: BudgetSupplier[]; mitigation_included?: boolean;
 }
+export interface MeetingAction { ref?: string; text: string; owner?: string; due?: string; status?: string; }
+export interface Meeting {
+  id: string; project_id: string; title: string; meeting_date: string; chair: string;
+  attendees: string[]; summary: string; topics: string[]; decisions: string[];
+  actions: MeetingAction[]; source: string;
+}
+export interface MeetingDetail extends Meeting { transcript: string; }
+export interface MeetingIn { project_id: string; title: string; meeting_date?: string; attendees?: string[]; chair?: string; transcript: string; }
+
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 
 export const api = {
@@ -126,6 +135,20 @@ export const api = {
   projects: () => get<Project[]>("/projects"),
   byTerminal: () => get<Record<string, Project[]>>("/projects/by-terminal"),
   createProject: (name: string, terminal: string) => post<Project>("/projects", { name, terminal }),
+  meetings: (pid: string) => get<Meeting[]>(`/meetings?project_id=${pid}`),
+  meeting: (id: string) => get<MeetingDetail>(`/meetings/${id}`),
+  createMeeting: (body: MeetingIn) => post<MeetingDetail>(`/meetings`, body),
+  deleteMeeting: async (id: string): Promise<void> => {
+    const r = await fetch(`${BASE}/meetings/${id}`, { method: "DELETE" });
+    if (!r.ok) throw new Error(await r.text());
+  },
+  uploadMeeting: async (pid: string, file: File, title: string, date: string): Promise<MeetingDetail> => {
+    const fd = new FormData(); fd.append("project_id", pid); fd.append("file", file);
+    fd.append("title", title); fd.append("meeting_date", date);
+    const r = await fetch(`${BASE}/meetings/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
   documents: (pid: string) => get<Doc[]>(`/documents?project_id=${pid}`),
   ingestStatus: () => get<any>("/ingest/status"),
   ingestScan: () => post<any>("/ingest/scan", {}),

@@ -7,6 +7,7 @@ import Portfolio from "./views/Portfolio";
 import Ingest from "./views/Ingest";
 import Dashboard from "./views/Dashboard";
 import Documents from "./views/Documents";
+import Meetings from "./views/Meetings";
 import Foresight from "./views/Foresight";
 import LookAhead from "./views/LookAhead";
 import SystemMap from "./views/SystemMap";
@@ -84,6 +85,7 @@ export default function App() {
             {wsLink("/ingest", "⊕", "Ingest")}
             {wsLink("/dashboard", "◇", "Dashboard", 1)}
             {wsLink("/documents", "▤", "Documents", 1)}
+            {wsLink("/meetings", "🎙", "Meetings")}
             {wsLink("/foresight", "✦", "Foresight")}
             {wsLink("/lookahead", "📆", "Look-Ahead")}
             {wsLink("/systemmap", "🗺", "MFD / Bag Flow")}
@@ -113,6 +115,7 @@ export default function App() {
           <Route path="/ingest" element={<Ingest pid={pid} />} />
           <Route path="/dashboard" element={<Dashboard onOpen={setPid} />} />
           <Route path="/documents" element={<Documents pid={pid} />} />
+          <Route path="/meetings" element={<Meetings pid={pid} />} />
           <Route path="/foresight" element={<Foresight onOpen={setPid} />} />
           <Route path="/lookahead" element={<LookAhead pid={pid} />} />
           <Route path="/systemmap" element={<SystemMap pid={pid} />} />
