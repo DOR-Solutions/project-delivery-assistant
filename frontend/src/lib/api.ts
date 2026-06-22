@@ -66,6 +66,14 @@ export interface ResourcesOut {
 export interface SysNode { id: string; name: string; capacity: number; status: string; share_pct: number; bags: number; }
 export interface SystemMapOut { nodes: SysNode[]; edges: { from: string; to: string }[]; }
 export interface ImpactOut { area: { id: string; name: string; capacity: number }; share_pct: number; bags_affected: number; downstream: string[]; severity: string; }
+export interface MfdResource { item: string; qty: number; type: string; }
+export interface MfdReroute { id: string; name: string; take: number; new_util: number; was_util: number; }
+export interface MfdSim {
+  area: { id: string; name: string; capacity: number; status: string };
+  lost_bags: number; lost_pct: number; absorbed: number; residual: number; residual_pct: number;
+  reroute: MfdReroute[]; downstream: { id: string; name: string }[]; severity: string;
+  recovery_min: number; mitigation: string[]; resources: MfdResource[];
+}
 export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
 export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
 export interface StrategyOut {
@@ -123,6 +131,7 @@ export const api = {
   },
   systemMap: (pid: string) => get<SystemMapOut>(`/ops/systemmap?project_id=${pid}`),
   impact: (pid: string, area: string) => get<ImpactOut>(`/ops/impact?project_id=${pid}&area=${area}`),
+  mfdSimulate: (pid: string, area: string) => get<MfdSim>(`/ops/mfd/simulate?project_id=${pid}&area=${area}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),
   chat: (pid: string, message: string, history: any[]) => post<{ reply: string; ai: boolean }>("/ai/chat", { project_id: pid, message, history }),

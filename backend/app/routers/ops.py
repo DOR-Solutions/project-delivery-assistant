@@ -365,6 +365,18 @@ def impact(project_id: str, area: str, db: Session = Depends(get_db)):
     return res
 
 
+@router.get("/mfd/simulate")
+def mfd_simulate(project_id: str, area: str, db: Session = Depends(get_db)):
+    """Bag-flow loss simulation for a line: lost throughput, re-routing/absorption
+    by parallel lines, residual backlog, downstream impact, mitigation + resources."""
+    ops = _ops_for(project_id, db)
+    comp = engine.compute_ops(ops)
+    res = engine.simulate_loss(ops, comp, area)
+    if not res:
+        raise HTTPException(404, "Unknown area")
+    return res
+
+
 @router.get("/forecast")
 def forecast(project_id: str):
     return {"directs": engine.forecast_directs(T5_DIRECTS),

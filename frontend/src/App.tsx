@@ -85,7 +85,7 @@ export default function App() {
             {wsLink("/documents", "▤", "Documents", 1)}
             {wsLink("/foresight", "✦", "Foresight")}
             {wsLink("/lookahead", "📆", "Look-Ahead")}
-            {wsLink("/systemmap", "🗺", "System Map")}
+            {wsLink("/systemmap", "🗺", "MFD / Bag Flow")}
             {wsLink("/synergy", "♻", "Synergy")}
             {wsLink("/strategy", "🧭", "Strategy")}
             {wsLink("/budget", "💷", "Budget")}
