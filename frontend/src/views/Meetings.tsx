@@ -63,8 +63,10 @@ export default function Meetings({ pid }: { pid: string }) {
       <div className="eyebrow">Workspace · meeting intelligence</div>
       <h1>🎙 Meetings & Transcripts</h1>
       <p style={{ color: "var(--gray)", maxWidth: 920, marginBottom: 10 }}>
-        A searchable record of every project meeting. Paste or upload the transcript and MAX extracts the
-        attendees, decisions and action log — and makes it all answerable in <b>Ask MAX</b>, cited by meeting.
+        A searchable record of every project meeting. Once <b>Microsoft Teams</b> has produced the recording
+        transcript, upload it here (Teams <b>.vtt</b>, or <b>.docx/.pdf</b> minutes) — MAX cleans up the
+        speaker-tagged transcript and extracts the attendees, decisions and action log, and makes it all
+        answerable in <b>Ask MAX</b>, cited by meeting.
       </p>
 
       <div className="grid" style={{ gridTemplateColumns: "320px 1fr", alignItems: "start" }}>
@@ -101,8 +103,8 @@ export default function Meetings({ pid }: { pid: string }) {
                 <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={12}
                   placeholder="Paste the meeting transcript or minutes here…" style={{ ...inp, fontFamily: "var(--fm)", fontSize: 12, resize: "vertical" }} />
               </Field>
-              <Field label="…or upload a file (PDF / DOCX / TXT / VTT)">
-                <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt,.vtt,.md,.csv" style={{ fontSize: 12 }} />
+              <Field label="…or upload a Teams transcript (.vtt) or minutes (.pdf / .docx / .txt)">
+                <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt,.vtt,.srt,.md,.csv" style={{ fontSize: 12 }} />
               </Field>
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn" disabled={busy} onClick={submit} style={{ background: "var(--teal)", color: "#fff", border: "none" }}>

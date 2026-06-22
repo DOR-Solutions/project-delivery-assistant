@@ -42,7 +42,38 @@ def parse_file(filename: str, data: bytes) -> Tuple[str, str]:
         return parse_docx(data), "docx"
     if ext in ("pptx", "ppt"):
         return parse_pptx(data), "pptx"
+    if ext in ("vtt", "srt"):
+        return parse_vtt(data), "transcript"
     return data.decode("utf-8", errors="replace"), ("csv" if ext in ("csv", "tsv") else "text")
+
+
+def parse_vtt(data: bytes) -> str:
+    """Microsoft Teams / WebVTT (and SRT) transcript -> clean speaker-tagged text.
+
+    Strips the WEBVTT header, cue indices and timestamp lines, unwraps the
+    ``<v Speaker>…</v>`` voice tags Teams emits, and merges consecutive turns by
+    the same speaker so the result reads like minutes (``Speaker: text``)."""
+    import re
+    raw = data.decode("utf-8-sig", errors="replace")
+    turns: list[list] = []  # [speaker_or_None, text]
+    for ln in raw.splitlines():
+        s = ln.strip()
+        if not s or s.upper() == "WEBVTT" or s.startswith("NOTE") or "-->" in s or re.match(r"^\d+$", s):
+            continue
+        m = re.search(r"<v\s+([^>]+)>(.*)", s)
+        if m:
+            sp, txt = m.group(1).strip(), m.group(2)
+        else:
+            mm = re.match(r"^([A-Z][\w'.\-]+(?:\s+[A-Z][\w'.\-]+){0,3}):\s*(.*)$", s)
+            sp, txt = (mm.group(1).strip(), mm.group(2)) if mm else (None, s)
+        txt = re.sub(r"<[^>]+>", "", txt).strip()
+        if not txt:
+            continue
+        if turns and turns[-1][0] == sp:
+            turns[-1][1] += " " + txt
+        else:
+            turns.append([sp, txt])
+    return "\n".join((f"{sp}: {txt}" if sp else txt) for sp, txt in turns).strip()
 
 
 def parse_pptx(data: bytes) -> str:

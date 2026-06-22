@@ -1,4 +1,22 @@
 from app import ai
+from app.parsing import parse_vtt, parse_file
+
+
+def test_teams_vtt_parsing():
+    vtt = (
+        b"WEBVTT\n\n1\n00:00:00.000 --> 00:00:03.500\n"
+        b"<v Andy Groom>Good morning everyone.</v>\n\n"
+        b"2\n00:00:03.500 --> 00:00:07.000\n"
+        b"<v Andy Groom>Area 25 go-live is confirmed.</v>\n\n"
+        b"3\n00:00:07.200 --> 00:00:10.000\n"
+        b"<v Ali Zakaria>Thanks Andy.</v>\n"
+    )
+    txt = parse_vtt(vtt)
+    assert "WEBVTT" not in txt and "-->" not in txt
+    # consecutive same-speaker cues merge into one turn
+    assert "Andy Groom: Good morning everyone. Area 25 go-live is confirmed." in txt
+    assert "Ali Zakaria: Thanks Andy." in txt
+    assert parse_file("Meeting.vtt", vtt)[1] == "transcript"
 
 
 def test_heuristic_meeting_extracts_actions_and_attendees():
