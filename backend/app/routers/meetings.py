@@ -5,10 +5,18 @@ import uuid
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models, schemas, ai
+from .. import models, schemas, ai, actions, portfolio
 from ..parsing import parse_file
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/meetings", tags=["meetings"])
+
+
+class TaskPatch(BaseModel):
+    status: str | None = None
+    owner: str | None = None
+    due: str | None = None
+    workstream: str | None = None
 
 
 def _apply_extract(m: models.Meeting, ex: dict, keep_attendees: bool):
@@ -48,6 +56,7 @@ async def create_meeting(body: schemas.MeetingIn, db: Session = Depends(get_db))
     ex = await ai.extract_meeting(body.title, body.transcript)
     _apply_extract(m, ex, keep_attendees=bool(body.attendees))
     db.add(m); db.commit(); db.refresh(m)
+    actions.sync_meeting_tasks(db, m)
     return m
 
 
@@ -66,6 +75,7 @@ async def upload_meeting(project_id: str = Form(...), title: str = Form(""),
     ex = await ai.extract_meeting(title, text)
     _apply_extract(m, ex, keep_attendees=False)
     db.add(m); db.commit(); db.refresh(m)
+    actions.sync_meeting_tasks(db, m)
     return m
 
 
@@ -76,3 +86,45 @@ def delete_meeting(mid: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Unknown meeting")
     db.delete(m); db.commit()
     return {"ok": True}
+
+
+# ---------- action register / progress / agenda (meeting-driven PM workflow) ----------
+@router.get("/register/{project_id}")
+def action_register(project_id: str, db: Session = Depends(get_db)):
+    """Live task register lifted from meeting minutes: progress, assignment
+    (PM/supplier) and workstream rollups, plus every action item."""
+    return actions.register(db, project_id)
+
+
+@router.patch("/action/{task_id}")
+def update_task(task_id: str, patch: TaskPatch, db: Session = Depends(get_db)):
+    """PM updates an action — status (open/in-progress/closed), owner, due,
+    workstream — as work progresses."""
+    t = db.get(models.Task, task_id)
+    if not t:
+        raise HTTPException(404, "Unknown task")
+    if patch.status:
+        t.status = actions.norm_status(patch.status)
+    if patch.owner is not None:
+        t.owner = patch.owner; t.owner_type = actions.classify_owner(patch.owner)
+    if patch.due is not None:
+        t.due = patch.due
+    if patch.workstream:
+        t.workstream = patch.workstream
+    from datetime import datetime as _dt
+    t.updated_at = _dt.utcnow()
+    db.commit()
+    return actions._task_dict(t)
+
+
+@router.get("/update/{project_id}")
+def progress_update(project_id: str, db: Session = Depends(get_db)):
+    """Generate a project progress update from action completion."""
+    return actions.progress_update(db, project_id, portfolio.PROJECTS_META.get(project_id, {}))
+
+
+@router.get("/agenda/{project_id}")
+def next_agenda(project_id: str, db: Session = Depends(get_db)):
+    """Generate the draft agenda for the next meeting (standing items + carried-
+    forward open actions, grouped by workstream)."""
+    return actions.next_agenda(db, project_id, portfolio.PROJECTS_META.get(project_id, {}))

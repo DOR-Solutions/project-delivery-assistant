@@ -128,6 +128,19 @@ export interface Meeting {
 export interface MeetingDetail extends Meeting { transcript: string; }
 export interface MeetingIn { project_id: string; title: string; meeting_date?: string; attendees?: string[]; chair?: string; transcript: string; }
 
+export interface TaskItem { id: string; ref: string; text: string; owner: string; owner_type: string; workstream: string; due: string; status: string; overdue: boolean; meeting_id?: string; }
+export interface RegGroup { name: string; total: number; closed: number; open: number; }
+export interface ActionRegister {
+  progress_pct: number; total: number; open: number; in_progress: number; closed: number; overdue: number;
+  by_owner_type: RegGroup[]; by_workstream: RegGroup[]; by_owner: RegGroup[]; tasks: TaskItem[];
+}
+export interface ProgressUpdate { text: string; progress_pct: number; closed: number; open: number; overdue: number; by_workstream: RegGroup[]; }
+export interface NextAgenda {
+  title: string; based_on?: string; standing: string[]; carry_forward: TaskItem[];
+  carry_forward_by_workstream: { workstream: string; items: TaskItem[] }[];
+  for_noting_closed: TaskItem[]; progress_pct: number; generated_at: string;
+}
+
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 
 export const api = {
@@ -149,6 +162,11 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.json();
   },
+  actionRegister: (pid: string) => get<ActionRegister>(`/meetings/register/${pid}`),
+  updateTask: (id: string, patch: Partial<{ status: string; owner: string; due: string; workstream: string }>) =>
+    fetch(`${BASE}/meetings/action/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }).then((r) => r.json() as Promise<TaskItem>),
+  progressUpdate: (pid: string) => get<ProgressUpdate>(`/meetings/update/${pid}`),
+  nextAgenda: (pid: string) => get<NextAgenda>(`/meetings/agenda/${pid}`),
   documents: (pid: string) => get<Doc[]>(`/documents?project_id=${pid}`),
   ingestStatus: () => get<any>("/ingest/status"),
   ingestScan: () => post<any>("/ingest/scan", {}),

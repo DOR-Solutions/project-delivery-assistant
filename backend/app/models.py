@@ -14,6 +14,7 @@ class Project(Base):
     reports = relationship("Report", back_populates="project", cascade="all, delete-orphan")
     bag_days = relationship("BagDay", back_populates="project", cascade="all, delete-orphan")
     meetings = relationship("Meeting", back_populates="project", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
 
 class Document(Base):
     __tablename__ = "documents"
@@ -83,6 +84,26 @@ class Meeting(Base):
     source = Column(String, default="manual")      # manual | upload | seed
     created_at = Column(DateTime, default=datetime.utcnow)
     project = relationship("Project", back_populates="meetings")
+
+
+class Task(Base):
+    """An action item lifted from a meeting into a live, trackable project
+    register — assigned to a PM or supplier, bucketed into a workstream, with a
+    status that PMs update as work completes."""
+    __tablename__ = "tasks"
+    id = Column(String, primary_key=True)
+    project_id = Column(String, ForeignKey("projects.id"))
+    meeting_id = Column(String, nullable=True)        # most recent meeting it featured in
+    ref = Column(String, default="")
+    text = Column(Text, default="")
+    owner = Column(String, default="")
+    owner_type = Column(String, default="pm")          # pm | supplier | unassigned
+    workstream = Column(String, default="General")
+    due = Column(String, default="")
+    status = Column(String, default="open")            # open | in-progress | closed
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="tasks")
 
 
 class IngestManifest(Base):

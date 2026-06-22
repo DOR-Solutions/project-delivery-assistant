@@ -1,5 +1,16 @@
-from app import ai
+from app import ai, actions
 from app.parsing import parse_vtt, parse_file
+
+
+def test_action_classification():
+    assert actions.classify_owner("Pratik Darjee (ICTS)") == "supplier"
+    assert actions.classify_owner("Dalkia") == "supplier"
+    assert actions.classify_owner("Andrew Groom") == "pm"
+    assert actions.classify_owner("") == "unassigned"
+    assert actions.classify_workstream("Align comms language with BA Ops") == "Comms & Stakeholders"
+    assert actions.classify_workstream("Progress RTG and SAT sign-off") == "Commissioning & Safety"
+    assert actions.norm_status("CLOSED") == "closed"
+    assert actions.norm_status("") == "open"
 
 
 def test_teams_vtt_parsing():

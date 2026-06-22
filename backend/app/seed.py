@@ -156,6 +156,8 @@ MEETINGS_SEED = [
          {"ref": "A3", "text": "Ensure areas 264 & 265 are not isolated concurrently", "owner": "Matt Davies", "due": "", "status": "open"},
          {"ref": "A4", "text": "Reinstate structured review of performance data in the weekly agenda", "owner": "Andrew Groom", "due": "", "status": "open"},
          {"ref": "A5", "text": "Include L2/L3 screening capacity in performance reports", "owner": "Fred Tasker", "due": "", "status": "open"},
+         {"ref": "A6", "text": "Engage ICTS ahead of trials and validate resource adequacy", "owner": "Pratik Darjee (ICTS)", "due": "", "status": "open"},
+         {"ref": "A7", "text": "Capture and log ICTS non-standard operations during trials", "owner": "Pratik Darjee (ICTS)", "due": "", "status": "open"},
          {"ref": "A8", "text": "Finalise BA staffing and logistics for Reclaim 11", "owner": "Andrew Groom / Simon Peddie", "due": "2026-06-05", "status": "open"},
          {"ref": "A10", "text": "Progress RTG and readiness for 21 May trial", "owner": "Russell Wooding", "due": "2026-05-21", "status": "open"}]},
     {"file": "pilz_2026-05-12.txt", "date": "2026-05-12",
@@ -194,30 +196,38 @@ MEETINGS_SEED = [
          "Final areas SCA 74, SCA 24 and TRA 74 brought forward to accelerate delivery and enable early relinquishment of mitigations.",
          "Formal VI internal review/investigation required into the unauthorised commissioning activity."],
      "actions": [
-         {"ref": "A4", "text": "Issue clear stakeholder comms differentiating project go-live from BAU", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
+         {"ref": "A4", "text": "Issue clear stakeholder comms differentiating project go-live from BAU operations", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
          {"ref": "A5", "text": "Align comms language with BA Ops sensitivities", "owner": "Andrew Groom / Simon Peddie", "due": "", "status": "open"},
+         {"ref": "A6", "text": "Ensure areas 264 & 265 are not isolated concurrently", "owner": "Matt Davies", "due": "2026-05-08", "status": "closed"},
+         {"ref": "A7", "text": "Reinstate structured review of performance data in the weekly agenda", "owner": "Andrew Groom", "due": "2026-05-08", "status": "closed"},
+         {"ref": "A8", "text": "Include L2/L3 screening capacity in performance reports", "owner": "Fred Tasker", "due": "2026-05-08", "status": "closed"},
+         {"ref": "A9", "text": "Engage ICTS ahead of trials and validate resource adequacy", "owner": "Pratik Darjee (ICTS)", "due": "2026-05-08", "status": "closed"},
          {"ref": "A11", "text": "Finalise BA staffing and logistics for Reclaim 11", "owner": "Andrew Groom / Simon Peddie", "due": "2026-06-05", "status": "open"},
          {"ref": "—", "text": "Investigate the breakdown in communications behind the unauthorised commissioning", "owner": "Henry Gray", "due": "", "status": "open"}]},
 ]
 
 
 def _seed_meetings(db):
-    """Seed the bundled PILZ stakeholder-session minutes as project meetings."""
+    """Seed the bundled PILZ stakeholder-session minutes as project meetings and
+    materialise their action items into the live task register."""
     import os
+    from . import actions
     mdir = os.path.join(os.path.dirname(__file__), "data", "meetings")
-    for m in MEETINGS_SEED:
+    # oldest first so later meetings update the carried-forward action statuses
+    for m in sorted(MEETINGS_SEED, key=lambda x: x["date"]):
         if db.query(models.Meeting).filter(models.Meeting.title == m["title"]).first():
             continue
         path = os.path.join(mdir, m["file"])
         try:
             transcript = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
-            db.add(models.Meeting(
+            meeting = models.Meeting(
                 id=uuid.uuid4().hex[:12], project_id="t5-baggage-programme",
                 title=m["title"], meeting_date=m["date"], chair=m["chair"],
                 attendees=m["attendees"], transcript=transcript[:120000],
                 summary=m["summary"], topics=m["topics"], decisions=m["decisions"],
-                actions=m["actions"], source="seed"))
-            db.commit()
+                actions=m["actions"], source="seed")
+            db.add(meeting); db.commit()
+            actions.sync_meeting_tasks(db, meeting)
         except Exception:
             db.rollback()
 

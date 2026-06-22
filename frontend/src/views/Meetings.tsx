@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, Meeting, MeetingDetail } from "../lib/api";
+import ActionsPanel from "./ActionsPanel";
 
 const statusColor = (s = "") => (/clos/i.test(s) ? "#178A43" : /open/i.test(s) ? "#B0720A" : "#6B8093");
 const srcPill: Record<string, string> = { seed: "#0E7C86", manual: "#2F62C4", upload: "#7B36C9" };
@@ -10,6 +11,7 @@ export default function Meetings({ pid }: { pid: string }) {
   const [mode, setMode] = useState<"view" | "add">("view");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"meetings" | "actions">("meetings");
 
   // add-form state
   const [title, setTitle] = useState("");
@@ -65,10 +67,19 @@ export default function Meetings({ pid }: { pid: string }) {
       <p style={{ color: "var(--gray)", maxWidth: 920, marginBottom: 10 }}>
         A searchable record of every project meeting. Once <b>Microsoft Teams</b> has produced the recording
         transcript, upload it here (Teams <b>.vtt</b>, or <b>.docx/.pdf</b> minutes) — MAX cleans up the
-        speaker-tagged transcript and extracts the attendees, decisions and action log, and makes it all
-        answerable in <b>Ask MAX</b>, cited by meeting.
+        speaker-tagged transcript, extracts the attendees, decisions and action log, drives the project
+        action register, and makes it all answerable in <b>Ask MAX</b>.
       </p>
 
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, borderBottom: "1px solid var(--bor)" }}>
+        {([["meetings", "🎙 Meetings"], ["actions", "✅ Actions & Progress"]] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setTab(k)} className="btn"
+            style={{ background: "transparent", border: "none", borderBottom: tab === k ? "2px solid var(--teal)" : "2px solid transparent",
+              color: tab === k ? "var(--teal)" : "var(--gray)", borderRadius: 0, fontWeight: 700, padding: "6px 12px" }}>{label}</button>
+        ))}
+      </div>
+
+      {tab === "actions" ? <ActionsPanel pid={pid} /> : (
       <div className="grid" style={{ gridTemplateColumns: "320px 1fr", alignItems: "start" }}>
         {/* list */}
         <div>
@@ -182,6 +193,7 @@ export default function Meetings({ pid }: { pid: string }) {
           <div className="card" style={{ color: "var(--gray)" }}>Select a meeting, or record a new one.</div>
         )}
       </div>
+      )}
     </div>
   );
 }
