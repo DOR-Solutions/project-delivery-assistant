@@ -63,16 +63,18 @@ export interface ResourcesOut {
   by_supplier: { supplier: string; headcount: number; daily_cost: number; roles: string[] }[];
   by_role: { role: string; count: number; daily_cost: number }[];
 }
-export interface SysNode { id: string; name: string; capacity: number; status: string; share_pct: number; bags: number; }
-export interface SystemMapOut { nodes: SysNode[]; edges: { from: string; to: string }[]; }
-export interface ImpactOut { area: { id: string; name: string; capacity: number }; share_pct: number; bags_affected: number; downstream: string[]; severity: string; }
+export interface MfdSystemInfo { id: string; name: string; terminal: string; lines: number; }
+export interface MfdNode { id: string; name: string; capacity: number; status: string; stage: number; kind: string; share_pct: number; bags: number; }
+export interface MfdMap { id: string; name: string; terminal: string; baseline_bags: number; nodes: MfdNode[]; edges: { from: string; to: string }[]; stages: { stage: number; label: string }[]; }
 export interface MfdResource { item: string; qty: number; type: string; }
 export interface MfdReroute { id: string; name: string; take: number; new_util: number; was_util: number; }
+export interface MfdPerLine { id: string; name: string; lost_bags: number; absorbed: number; residual: number; mitigation: string[]; }
 export interface MfdSim {
-  area: { id: string; name: string; capacity: number; status: string };
+  system: { id: string; name: string; terminal: string };
+  areas: { id: string; name: string }[];
   lost_bags: number; lost_pct: number; absorbed: number; residual: number; residual_pct: number;
   reroute: MfdReroute[]; downstream: { id: string; name: string }[]; severity: string;
-  recovery_min: number; mitigation: string[]; resources: MfdResource[];
+  recovery_min: number; per_line: MfdPerLine[]; resources: MfdResource[];
 }
 export interface Supplier { name: string; category: string; contact: string; email: string; phone: string; services: string; framework: string; rating: number; }
 export interface PslOut { categories: string[]; counts: Record<string, number>; total: number; suppliers: Supplier[]; }
@@ -129,9 +131,9 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.blob();
   },
-  systemMap: (pid: string) => get<SystemMapOut>(`/ops/systemmap?project_id=${pid}`),
-  impact: (pid: string, area: string) => get<ImpactOut>(`/ops/impact?project_id=${pid}&area=${area}`),
-  mfdSimulate: (pid: string, area: string) => get<MfdSim>(`/ops/mfd/simulate?project_id=${pid}&area=${area}`),
+  mfdSystems: () => get<{ systems: MfdSystemInfo[] }>(`/ops/mfd/systems`),
+  mfdMap: (system: string) => get<MfdMap>(`/ops/mfd/map?system=${system}`),
+  mfdSimulate: (system: string, areas: string[]) => get<MfdSim>(`/ops/mfd/simulate?system=${system}&areas=${areas.join(",")}`),
   forecast: (pid: string) => get<Forecast>(`/ops/forecast?project_id=${pid}`),
   aiStatus: () => get<{ available: boolean }>("/ai/status"),
   chat: (pid: string, message: string, history: any[]) => post<{ reply: string; ai: boolean }>("/ai/chat", { project_id: pid, message, history }),

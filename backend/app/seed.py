@@ -55,73 +55,12 @@ T5_MITIGATION = [
 
 T5_OPS = {
     "areas": [
-        {"id": "HBS12", "name": "HBS 1/2 Screening", "capacity": 1800, "status": "in-service",
-         "parallel": ["HBS3", "VSO"], "recovery_min": 90,
-         "mitigation": [
-             "Cross-feed hold baggage to HBS 3 and VSO via the inter-machine sorter",
-             "Open manual search positions (MIP) to clear the screening backlog",
-             "Throttle check-in acceptance and hold latest-bag flights to protect dieback",
-             "Deploy porters to hand-carry cleared bags to make-up laterals"],
-         "resources": [
-             {"item": "Baggage operatives (porters)", "qty": 8, "type": "people"},
-             {"item": "MIP search agents", "qty": 4, "type": "people"},
-             {"item": "Vanderlande maintenance engineer", "qty": 2, "type": "engineer"},
-             {"item": "Tugs + dollies", "qty": 6, "type": "equipment"}]},
-        {"id": "HBS3", "name": "HBS 3 Screening", "capacity": 1200, "status": "commissioning",
-         "parallel": ["HBS12", "VSO"], "recovery_min": 75,
-         "mitigation": [
-             "Re-route South pier flow to HBS 1/2 via cross-feed",
-             "Bring forward HBS 3 commissioning crews to restore lines",
-             "Open MIP positions for manual clearance"],
-         "resources": [
-             {"item": "Baggage operatives (porters)", "qty": 6, "type": "people"},
-             {"item": "MIP search agents", "qty": 3, "type": "people"},
-             {"item": "Dalkia/VI commissioning engineer", "qty": 2, "type": "engineer"},
-             {"item": "Tugs + dollies", "qty": 4, "type": "equipment"}]},
-        {"id": "VSO", "name": "Vertical Sortation (T5B)", "capacity": 900, "status": "commissioning",
-         "parallel": ["HBS12", "HBS3"], "recovery_min": 60,
-         "mitigation": [
-             "Divert T5B transfer flow to HBS 1/2 early-bag store routing",
-             "Use track-transit system buffer to hold bags pending restore",
-             "Manual offload at T5B for connecting bags at risk"],
-         "resources": [
-             {"item": "Baggage operatives (porters)", "qty": 5, "type": "people"},
-             {"item": "TTS controller", "qty": 1, "type": "people"},
-             {"item": "Vanderlande maintenance engineer", "qty": 2, "type": "engineer"},
-             {"item": "Tugs + dollies", "qty": 4, "type": "equipment"}]},
-        {"id": "OOG", "name": "Out-of-gauge", "capacity": 300, "status": "in-service",
-         "parallel": [], "recovery_min": 45,
-         "mitigation": [
-             "Switch to full manual out-of-gauge handling at the OOG dock",
-             "Porter oversize bags directly to make-up / aircraft stands",
-             "Brief load control on OOG bags travelling late"],
-         "resources": [
-             {"item": "Baggage operatives (porters)", "qty": 4, "type": "people"},
-             {"item": "Flatbed trolleys", "qty": 4, "type": "equipment"},
-             {"item": "Maintenance engineer", "qty": 1, "type": "engineer"}]},
-        {"id": "MAKEUP", "name": "Make-up Laterals", "capacity": 1600, "status": "in-service",
-         "parallel": [], "recovery_min": 120,
-         "mitigation": [
-             "Open remote/standby make-up laterals and re-allocate flights",
-             "Manual bag build at carousel heads with extra ground crew",
-             "Porter time-critical bags directly to aircraft stands",
-             "Coordinate with airlines to re-sequence make-up by departure time"],
-         "resources": [
-             {"item": "Make-up ground crew", "qty": 12, "type": "people"},
-             {"item": "Dispatch coordinator", "qty": 2, "type": "people"},
-             {"item": "Vanderlande maintenance engineer", "qty": 3, "type": "engineer"},
-             {"item": "Tugs + dollies", "qty": 10, "type": "equipment"}]},
-        {"id": "RECLAIM", "name": "Reclaim", "capacity": 2000, "status": "in-service",
-         "parallel": [], "recovery_min": 60,
-         "mitigation": [
-             "Open alternate reclaim belts and re-assign arriving flights",
-             "Manual offload to belt heads for affected carousels",
-             "Passenger comms / FIDS update on reclaim belt changes"],
-         "resources": [
-             {"item": "Arrivals baggage crew", "qty": 8, "type": "people"},
-             {"item": "Customer service / comms agent", "qty": 2, "type": "people"},
-             {"item": "Maintenance engineer", "qty": 2, "type": "engineer"},
-             {"item": "Tugs + dollies", "qty": 4, "type": "equipment"}]},
+        {"id": "HBS12", "name": "HBS 1/2 Screening", "capacity": 1800, "status": "in-service"},
+        {"id": "HBS3", "name": "HBS 3 Screening", "capacity": 1200, "status": "commissioning"},
+        {"id": "VSO", "name": "Vertical Sortation (T5B)", "capacity": 900, "status": "commissioning"},
+        {"id": "OOG", "name": "Out-of-gauge", "capacity": 300, "status": "in-service"},
+        {"id": "MAKEUP", "name": "Make-up Laterals", "capacity": 1600, "status": "in-service"},
+        {"id": "RECLAIM", "name": "Reclaim", "capacity": 2000, "status": "in-service"},
     ],
     "bag_daily": [
         {"date": "2026-05-29", "planned": 45000, "actual": 43650, "capacity": 52000, "mishandled": 196, "oog": 917},

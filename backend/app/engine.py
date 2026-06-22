@@ -57,53 +57,6 @@ def impact_of(ops: dict, comp: dict, area_id: str) -> dict | None:
     sev = "critical" if share >= 25 else "high" if share >= 15 else "medium" if share >= 8 else "low"
     return {"area": area, "share_pct": share, "bags_affected": bags, "downstream": downstream, "severity": sev}
 
-
-def simulate_loss(ops: dict, comp: dict, area_id: str) -> dict | None:
-    """Project the loss of a line: lost throughput, how much parallel lines can
-    absorb, residual backlog at risk, new utilisation of re-routed lines,
-    downstream impact, plus the mitigation playbook and resources required."""
-    areas = ops.get("areas") or []
-    area = next((a for a in areas if a["id"] == area_id), None)
-    if not area:
-        return None
-    total = sum(a["capacity"] for a in areas) or 1
-    design = comp["last"].get("capacity") or 52000
-    actual = comp["last"]["actual"]
-    cap_day = lambda a: a["capacity"] / total * design
-    load = lambda a: actual * a["capacity"] / total
-
-    lost = round(load(area))
-    lost_pct = round(lost / (actual or 1) * 100)
-
-    parallel = [a for a in areas if a["id"] in (area.get("parallel") or []) and a.get("status") != "out-of-service"]
-    spare = {a["id"]: max(0, round(cap_day(a) - load(a))) for a in parallel}
-    absorb_cap = sum(spare.values())
-    absorbed = min(lost, absorb_cap)
-    residual = lost - absorbed
-    residual_pct = round(residual / (actual or 1) * 100)
-
-    reroute = []
-    for a in parallel:
-        s = spare[a["id"]]
-        take = round(absorbed * s / absorb_cap) if absorb_cap else 0
-        new_load = load(a) + take
-        reroute.append({"id": a["id"], "name": a["name"], "take": take,
-                        "new_util": round(new_load / (cap_day(a) or 1) * 100),
-                        "was_util": round(load(a) / (cap_day(a) or 1) * 100)})
-
-    sev = "critical" if residual_pct >= 15 else "high" if residual_pct >= 8 else "medium" if residual > 0 else "low"
-    downstream = [{"id": d, "name": next((a["name"] for a in areas if a["id"] == d), d)}
-                  for d in DOWNSTREAM.get(area_id, [])]
-    return {
-        "area": {"id": area["id"], "name": area["name"], "capacity": area["capacity"], "status": area.get("status")},
-        "lost_bags": lost, "lost_pct": lost_pct,
-        "absorbed": absorbed, "residual": residual, "residual_pct": residual_pct,
-        "reroute": reroute, "downstream": downstream, "severity": sev,
-        "recovery_min": area.get("recovery_min", 60),
-        "mitigation": area.get("mitigation", []),
-        "resources": area.get("resources", []),
-    }
-
 # ---------- daily task generation ----------
 def gen_daily_tasks(ops: dict, comp: dict) -> list[dict]:
     tasks: list[dict] = []

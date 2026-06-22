@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from .. import engine
+from .. import mfd
 from .. import portfolio
 from .. import schedule as schedule_mod
 from .. import ai
@@ -335,45 +336,32 @@ def budget(project_id: str, db: Session = Depends(get_db)):
     return out
 
 
-@router.get("/systemmap")
-def systemmap(project_id: str, db: Session = Depends(get_db)):
-    """Baggage flow map: areas (with share/status/bags) + downstream edges,
-    so the UI can render the MFD and model out-of-service impact."""
-    ops = _ops_for(project_id, db)
-    comp = engine.compute_ops(ops)
-    areas = ops.get("areas") or []
-    total = sum(a["capacity"] for a in areas) or 1
-    last_actual = comp["last"]["actual"]
-    nodes = [{
-        "id": a["id"], "name": a["name"], "capacity": a["capacity"],
-        "status": a.get("status", "in-service"),
-        "share_pct": round(a["capacity"] / total * 100),
-        "bags": round(last_actual * a["capacity"] / total),
-    } for a in areas]
-    edges = [{"from": src, "to": d} for src, dests in engine.DOWNSTREAM.items()
-             for d in dests if any(n["id"] == d for n in nodes) and any(n["id"] == src for n in nodes)]
-    return {"nodes": nodes, "edges": edges}
+@router.get("/mfd/systems")
+def mfd_systems():
+    """List the available baggage-flow systems (T5, T3 InterBag, PT5 TBS)."""
+    return {"systems": mfd.list_systems()}
 
 
-@router.get("/impact")
-def impact(project_id: str, area: str, db: Session = Depends(get_db)):
-    ops = _ops_for(project_id, db)
-    comp = engine.compute_ops(ops)
-    res = engine.impact_of(ops, comp, area)
+@router.get("/mfd/map")
+def mfd_map(system: str = "t5"):
+    """Material Flow Diagram for a system: nodes (share/status/bags/stage) + edges."""
+    res = mfd.build_map(system)
     if not res:
-        raise HTTPException(404, "Unknown area")
+        raise HTTPException(404, "Unknown system")
     return res
 
 
 @router.get("/mfd/simulate")
-def mfd_simulate(project_id: str, area: str, db: Session = Depends(get_db)):
-    """Bag-flow loss simulation for a line: lost throughput, re-routing/absorption
-    by parallel lines, residual backlog, downstream impact, mitigation + resources."""
-    ops = _ops_for(project_id, db)
-    comp = engine.compute_ops(ops)
-    res = engine.simulate_loss(ops, comp, area)
+def mfd_simulate(system: str = "t5", areas: str = ""):
+    """Bag-flow loss simulation for one or more lines: lost throughput,
+    re-routing/absorption by parallel lines, residual backlog, downstream impact,
+    mitigation playbook and resources required."""
+    ids = [a for a in areas.split(",") if a]
+    if not ids:
+        raise HTTPException(400, "Provide one or more area ids")
+    res = mfd.simulate(system, ids)
     if not res:
-        raise HTTPException(404, "Unknown area")
+        raise HTTPException(404, "Unknown system or areas")
     return res
 
 
