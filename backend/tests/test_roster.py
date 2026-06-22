@@ -29,3 +29,10 @@ def test_day_night_split():
     # 14:00–23:00 = 6h day (to 20:00) + 3h night
     day, night = roster._day_night_split("02:00 PM", "11:00 PM")
     assert round(day, 2) == 6.0 and round(night, 2) == 3.0
+
+
+def test_mitigation_supplier_line():
+    sup = roster.mitigation_supplier()
+    assert sup["source"] == "roster"
+    assert sup["spent"] > 0 and sup["budget"] >= sup["spent"]
+    assert "ABC" in sup["name"]

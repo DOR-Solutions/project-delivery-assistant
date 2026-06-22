@@ -66,13 +66,18 @@ export default function Budget({ pid }: { pid: string }) {
 
         <div className="card">
           <div className="panel-h">Supplier breakdown</div>
+          {b.mitigation_included && (
+            <div style={{ fontSize: 12, color: "var(--gray)", marginBottom: 10, padding: "6px 10px", background: "var(--bg)", borderRadius: 8, borderLeft: "3px solid #0E7C86" }}>
+              🪪 Includes the <b>ABC UMP manual-mitigation</b> charge, costed live from the roster on the ABC rate card (day/night split) — committed-to-date as spend, projected full month as allocation.
+            </div>
+          )}
           {(b.suppliers || []).map((sp) => (
             <div className="ws-row" key={sp.name}>
               <div className="top">
-                <span>{sp.name} <span style={{ color: "var(--gray)", fontFamily: "var(--fm)", fontSize: 10 }}>{fmt(sp.spent)} / {fmt(sp.budget)}</span></span>
+                <span>{sp.name}{sp.source === "roster" && <span className="pill" style={{ background: "#0E7C8622", color: "#0E7C86", fontSize: 9, marginLeft: 6 }}>live · roster</span>} <span style={{ color: "var(--gray)", fontFamily: "var(--fm)", fontSize: 10 }}>{fmt(sp.spent)} / {fmt(sp.budget)}</span></span>
                 <b style={{ color: supColor(sp.status) }}>{sp.pct_spent}%</b>
               </div>
-              <div className="ws-bar"><div className="ws-fill" style={{ width: Math.min(100, sp.pct_spent) + "%", background: supColor(sp.status) }} /></div>
+              <div className="ws-bar"><div className="ws-fill" style={{ width: Math.min(100, sp.pct_spent) + "%", background: sp.source === "roster" ? "#0E7C86" : supColor(sp.status) }} /></div>
             </div>
           ))}
           <table style={{ marginTop: 12 }}>
@@ -80,7 +85,7 @@ export default function Budget({ pid }: { pid: string }) {
             <tbody>
               {(b.suppliers || []).map((sp) => (
                 <tr key={sp.name}>
-                  <td style={{ fontWeight: 600 }}>{sp.name}</td>
+                  <td style={{ fontWeight: 600 }}>{sp.name}{sp.source === "roster" && <span className="pill" style={{ background: "#0E7C8622", color: "#0E7C86", fontSize: 9, marginLeft: 6 }}>UMP</span>}</td>
                   <td>{fmt(sp.budget)}</td>
                   <td>{fmt(sp.spent)}</td>
                   <td style={{ color: sp.remaining < 0 ? "#D4374C" : "var(--ink)" }}>{fmt(sp.remaining)}</td>

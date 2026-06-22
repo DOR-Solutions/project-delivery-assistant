@@ -112,12 +112,12 @@ export interface StrategyOut {
   todo: { id?: string; text: string; detail?: string; owner: string; pri?: string; priority?: string; tag?: string }[];
   inputs: { documents: number; risks: number; bag_days: number; forecast_days: number };
 }
-export interface BudgetSupplier { name: string; budget: number; spent: number; remaining: number; pct_spent: number; status: string; }
+export interface BudgetSupplier { name: string; budget: number; spent: number; remaining: number; pct_spent: number; status: string; source?: string; }
 export interface BudgetOut {
   has_budget: boolean; name: string; currency?: string;
   bac?: number; ac?: number; allocated?: number; ev?: number; cpi?: number; eac?: number; vac?: number;
   overspend?: number; pct_spent?: number; completion?: number; verdict?: string; rag?: string;
-  suppliers?: BudgetSupplier[];
+  suppliers?: BudgetSupplier[]; mitigation_included?: boolean;
 }
 export interface Forecast { directs: any[]; mitigation: { fc: any[]; avg_total: number }; }
 

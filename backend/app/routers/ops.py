@@ -331,9 +331,14 @@ def budget(project_id: str, db: Session = Depends(get_db)):
         meta = portfolio.PROJECTS_META.get(project_id, {})
         return {"has_budget": False, "name": meta.get("name", project_id)}
     meta = portfolio.PROJECTS_META.get(project_id, {})
+    # fold the ABC UMP manual-mitigation charge into the T5 out-turn (live from roster)
+    if project_id == "t5-baggage-programme":
+        sup = roster_mod.mitigation_supplier()
+        b = {**b, "suppliers": [*b["suppliers"], sup], "total": b["total"] + sup["budget"]}
     out = engine.compute_budget(b, int(meta.get("completion", 0)))
     out["has_budget"] = True
     out["name"] = meta.get("name", project_id)
+    out["mitigation_included"] = project_id == "t5-baggage-programme"
     return out
 
 

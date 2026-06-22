@@ -215,3 +215,16 @@ def report():
         "daily": daily(),
         "top_staff": top_staff(),
     }
+
+
+def mitigation_supplier():
+    """The ABC UMP manual mitigation as a budget supplier line, sourced live from
+    the roster costed on the ABC rate card: spent = committed charge to date,
+    budget = projected full-month charge."""
+    s = summary()
+    return {
+        "name": "ABC (UMP manual mitigation)",
+        "budget": round(s["projected_month_charge"]),
+        "spent": round(s["total_charge"]),
+        "source": "roster",
+    }

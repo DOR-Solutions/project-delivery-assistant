@@ -331,6 +331,7 @@ def compute_budget(budget: dict, completion: int) -> dict:
         sp = round(ss / sb * 100) if sb else 0
         sup_out.append({"name": s.get("name", ""), "budget": sb, "spent": ss,
                         "remaining": sb - ss, "pct_spent": sp,
+                        "source": s.get("source"),
                         "status": "over" if ss > sb else "high" if sp >= 90 else "ok"})
 
     return {
