@@ -91,6 +91,35 @@ export default function CommandCenter({ pid }: { pid: string }) {
         </div>
       )}
 
+      {s.actions && (
+        <div className="card" onClick={() => nav("/meetings")} title="Open Meetings → Actions & Progress"
+          style={{ marginTop: 12, cursor: "pointer", borderLeft: "4px solid #7B36C9" }}>
+          <div className="panel-h" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <span>✅ Meeting-driven actions & progress</span>
+            <span style={{ fontSize: 12, color: "var(--gray)" }}>{s.actions.closed}/{s.actions.total} closed · {s.actions.open} open · {s.actions.overdue} overdue <span style={{ color: "var(--teal)" }}>open ↗</span></span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "230px 1fr", gap: 20, marginTop: 8 }}>
+            <div>
+              <Stat label="Programme progress (incl. actions)" val={(s.completion_combined ?? s.completion) + "%"} color="#7B36C9" />
+              <div style={{ fontSize: 11, color: "var(--gray)", margin: "6px 0 8px" }}>Delivery {s.completion}% (×0.8) + actions {s.actions.progress_pct}% (×0.2)</div>
+              <ProgressBar label="Delivery" pct={s.completion} color="#0E7C86" />
+              <ProgressBar label="Meeting actions" pct={s.actions.progress_pct} color="#7B36C9" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray)", textTransform: "uppercase", letterSpacing: .4, marginBottom: 6 }}>Planned next actions</div>
+              {s.actions.planned.map((t) => (
+                <div key={t.id} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12.5, padding: "3px 0", borderBottom: "1px solid var(--bor)" }}>
+                  <span className="pill" style={{ background: "var(--tdim)", color: "var(--teal)", fontSize: 9 }}>{t.workstream}</span>
+                  <span style={{ flex: 1 }}>{t.text}</span>
+                  <span style={{ color: "var(--gray)", whiteSpace: "nowrap" }}>{t.owner}</span>
+                  {t.overdue && <span style={{ color: "#D4374C", fontWeight: 700 }}>⚠</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid" style={{ gridTemplateColumns: "320px 1fr", marginTop: 14 }}>
         <div className="card">
           <div className="panel-h">Overall Health</div>
@@ -226,6 +255,17 @@ function Stat({ label, val, color }: { label: string; val: string; color: string
     <div>
       <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: .4, color: "var(--gray)" }}>{label}</div>
       <div style={{ fontFamily: "var(--fh)", fontWeight: 800, fontSize: 19, color }}>{val}</div>
+    </div>
+  );
+}
+
+function ProgressBar({ label, pct, color }: { label: string; pct: number; color: string }) {
+  return (
+    <div style={{ marginBottom: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 2 }}><span>{label}</span><b>{pct}%</b></div>
+      <div style={{ height: 7, background: "var(--bg)", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ width: Math.min(100, pct) + "%", height: "100%", background: color }} />
+      </div>
     </div>
   );
 }

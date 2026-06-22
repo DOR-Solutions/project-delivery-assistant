@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from .. import engine
+from .. import actions
 from .. import mfd
 from .. import roster as roster_mod
 from .. import portfolio
@@ -70,7 +71,23 @@ def _project_summary(project_id: str, ops: dict) -> dict:
 @router.get("/summary")
 def summary(project_id: str, db: Session = Depends(get_db)):
     ops = _ops_for(project_id, db)
-    return _project_summary(project_id, ops)
+    s = _project_summary(project_id, ops)
+    # fold the meeting-driven action register into the project picture
+    reg = actions.register(db, project_id)
+    if reg["total"]:
+        planned = [t for t in reg["tasks"] if t["status"] != "closed"][:6]
+        # combined programme progress: delivery milestones (80%) + action closure (20%)
+        combined = round(s["completion"] * 0.8 + reg["progress_pct"] * 0.2)
+        s["actions"] = {
+            "progress_pct": reg["progress_pct"], "total": reg["total"], "open": reg["open"],
+            "in_progress": reg["in_progress"], "closed": reg["closed"], "overdue": reg["overdue"],
+            "by_owner_type": reg["by_owner_type"], "by_workstream": reg["by_workstream"],
+            "planned": planned,
+        }
+        s["completion_combined"] = combined
+        s["kpis"]["open_actions"] = reg["open"]
+        s["kpis"]["overdue_actions"] = reg["overdue"]
+    return s
 
 
 @router.get("/portfolio")

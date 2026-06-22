@@ -23,13 +23,18 @@ export interface Gates { current: string; next: string; next_label: string; stag
 export interface Summary {
   project_id: string; name: string; terminal: string; completion: number;
   health: Health;
-  kpis: { completion: number; bags: number; utilisation: number; adherence: number; open_risks: number; critical: number; tasks_today: number; next_gate: string; };
+  kpis: { completion: number; bags: number; utilisation: number; adherence: number; open_risks: number; critical: number; tasks_today: number; next_gate: string; open_actions?: number; overdue_actions?: number; };
   milestones: { on_track: number; total: number; items: { name: string; on_track: boolean }[] };
   workstreams: Workstream[];
   gates: Gates;
   throughput: { date: string; planned: number; actual: number }[];
   tasks: any[]; risks: any[];
   crew_baseline: number; crew_on_shift: number;
+  completion_combined?: number;
+  actions?: {
+    progress_pct: number; total: number; open: number; in_progress: number; closed: number; overdue: number;
+    by_owner_type: RegGroup[]; by_workstream: RegGroup[]; planned: TaskItem[];
+  };
 }
 
 export interface PortfolioProject { project_id: string; name: string; terminal: string; completion: number; health: Health; open_risks: number; critical: number; next_gate: string; risk_count: number; }
