@@ -18,16 +18,30 @@ router = APIRouter(prefix="/api/ops", tags=["ops"])
 
 
 def _ops_for(project_id: str, db: Session) -> dict:
-    """Unified ops payload for a project. DB risks (if any) override the
-    seeded register so edits persist; otherwise we fall back to portfolio data."""
+    """Unified ops payload for a project. DB risks and daily datasets override the
+    seeded register so uploads persist and dashboards update live."""
     ops = portfolio.get_ops(project_id)
     if ops is None:
         raise HTTPException(404, "Unknown project")
     risks = db.query(models.Risk).filter(models.Risk.project_id == project_id).all()
-    if risks:
+    bag_days = db.query(models.BagDay).filter(models.BagDay.project_id == project_id).order_by(models.BagDay.date).all()
+    work_log = db.query(models.WorkLog).filter(models.WorkLog.project_id == project_id).order_by(models.WorkLog.date).all()
+    milestones = db.query(models.Milestone).filter(models.Milestone.project_id == project_id).order_by(models.Milestone.date).all()
+    if risks or bag_days or work_log or milestones:
         ops = dict(ops)
-        ops["risks"] = [{"id": r.id, "title": r.title, "area": r.area, "likelihood": r.likelihood,
-                         "impact": r.impact, "mitigation": r.mitigation, "owner": r.owner} for r in risks]
+        if risks:
+            ops["risks"] = [{"id": r.id, "title": r.title, "area": r.area, "likelihood": r.likelihood,
+                             "impact": r.impact, "mitigation": r.mitigation, "owner": r.owner} for r in risks]
+        if bag_days:
+            ops["bag_daily"] = [{"date": d.date, "planned": d.planned, "actual": d.actual, "capacity": d.capacity,
+                                  "mishandled": 0, "oog": 0, "day": d.day, "series": d.series} for d in bag_days]
+        if work_log:
+            ops["work_log"] = [{"date": w.date, "activity": w.activity, "area": w.area, "pct": w.pct,
+                                 "contractor": w.contractor} for w in work_log]
+        if milestones:
+            ops["meta"] = dict(ops.get("meta") or {})
+            ops["meta"]["milestones"] = [{"date": m.date, "title": m.title, "status": m.status,
+                                           "detail": m.detail, "on_track": bool(m.on_track)} for m in milestones]
     return ops
 
 

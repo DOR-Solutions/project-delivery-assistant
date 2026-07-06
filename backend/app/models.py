@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, Text, JSON, ForeignKey, DateTime
+from sqlalchemy import Column, String, Integer, Float, Text, JSON, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -41,6 +41,9 @@ class Risk(Base):
     mitigation = Column(Text)
     owner = Column(String)
     status = Column(String, default="open")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    source_ref = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
     project = relationship("Project", back_populates="risks")
 
 class Report(Base):
@@ -51,19 +54,63 @@ class Report(Base):
     data = Column(JSON)   # full report snapshot
     project = relationship("Project", back_populates="reports")
 
+
+class ReportSnapshot(Base):
+    __tablename__ = "report_snapshots"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(String, ForeignKey("projects.id"))
+    date = Column(String)
+    completion_pct = Column(Integer, default=0)
+    rag = Column(String, default="amber")
+    data = Column(JSON, default=dict)
+    source_ref = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint("project_id", "date", name="uq_report_snapshot_project_date"),)
+
 class BagDay(Base):
     __tablename__ = "bag_days"
     id = Column(Integer, primary_key=True, autoincrement=True)
     project_id = Column(String, ForeignKey("projects.id"))
     date = Column(String)
-    day = Column(String)
+    day = Column(String, default="")
     series = Column(String)   # 'direct' | 'mitigation' | 'throughput'
     planned = Column(Float, default=0)
     actual = Column(Float, default=0)
     capacity = Column(Float, default=0)
     day_type = Column(String, default="")
     breakdown = Column(JSON, default=dict)  # zone breakdown for mitigation
+    source_ref = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
     project = relationship("Project", back_populates="bag_days")
+    __table_args__ = (UniqueConstraint("project_id", "date", "series", name="uq_bag_day_project_date_series"),)
+
+class WorkLog(Base):
+    __tablename__ = "work_log"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(String, ForeignKey("projects.id"))
+    date = Column(String)
+    activity = Column(String, default="")
+    area = Column(String, default="")
+    pct = Column(Integer, default=0)
+    contractor = Column(String, default="")
+    source_ref = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint("project_id", "date", "activity", name="uq_work_log_project_date_activity"),)
+
+
+class Milestone(Base):
+    __tablename__ = "milestones"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(String, ForeignKey("projects.id"))
+    date = Column(String)
+    title = Column(String)
+    status = Column(String, default="planned")
+    detail = Column(Text, default="")
+    on_track = Column(Integer, default=1)
+    source_ref = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint("project_id", "date", "title", name="uq_milestone_project_date_title"),)
+
 
 class Meeting(Base):
     """A recorded project meeting / stakeholder session and its transcript.
