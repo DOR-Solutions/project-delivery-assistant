@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Launch MAX.ai as a single service: the backend (FastAPI) serves the built
-# frontend AND the API on one port (8000) — robust for Codespaces forwarding.
+# Launch MAX.ai as a single service: the FastAPI backend serves the built
+# frontend AND the API on one port. Works on Railway (Nixpacks) and Codespaces.
 set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-# Backend deps (idempotent)
+# Use whichever Python is available (no venv — Railway installs to the system env)
+PY="$(command -v python3 || command -v python)"
+
+# Backend dependencies
 cd "$ROOT/backend"
-[ -d .venv ] || { python3 -m venv .venv && ./.venv/bin/pip install --upgrade pip -q; }
-./.venv/bin/pip install -r requirements.txt -q
+"$PY" -m pip install --upgrade pip -q
+"$PY" -m pip install -r requirements.txt -q
 
 # Build the frontend (the backend serves the static build)
 cd "$ROOT/frontend"
@@ -15,7 +18,6 @@ cd "$ROOT/frontend"
 echo "==> Building frontend…"
 npm run build
 
-# Serve everything from the backend on :8000 (0.0.0.0 so the forwarder can reach it)
+# Serve from the backend, binding Railway's port (falls back to 8000)
 cd "$ROOT/backend"
-echo "==> MAX.ai is live on http://localhost:8000  — open the forwarded PORT 8000"
-exec ./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+exec "$PY" -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
