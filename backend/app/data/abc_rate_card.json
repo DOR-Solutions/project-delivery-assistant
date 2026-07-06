@@ -1,0 +1,25 @@
+{
+  "supplier": "ABC",
+  "title": "ABC Rate Card",
+  "as_of": "2025-05-01",
+  "source": "Rate_Changes__May_2025 — '2025 - Rate Card' sheet",
+  "currency": "£",
+  "day_window": [8, 20],
+  "night_window": [20, 8],
+  "labour": [
+    { "role": "Operative", "day": 27.99, "night": 30.05, "th_day": 41.985, "th_night": 45.075 },
+    { "role": "Driver", "day": 31.87, "night": 32.79, "th_day": 47.805, "th_night": 49.185 },
+    { "role": "Team Leader", "day": 30.97, "night": 33.89, "th_day": 46.455, "th_night": 50.835 },
+    { "role": "Mobilisation Lead", "day": 37.77, "night": 41.16, "th_day": 56.655, "th_night": 61.74 }
+  ],
+  "equipment": [
+    { "item": "Luton Van", "day_rate": 120 },
+    { "item": "Minibus", "day_rate": 110 },
+    { "item": "EBT", "day_rate": 70 },
+    { "item": "Wessex Trailer", "day_rate": 20.5 },
+    { "item": "Radios", "day_rate": 5 },
+    { "item": "Geest Truck", "day_rate": 10.5 }
+  ],
+  "role_map": { "Operative": "Operative", "Team Leader": "Team Leader", "Customer Service": "Operative" },
+  "notes": "Charge rates as billed by ABC. Day 08:00–20:00, Night 20:00–08:00; each shift split pro-rata. 'Customer Service' on the roster is charged at the Operative rate (no distinct CS line on the rate card). Time-and-half (overtime) rates held for reference but not auto-applied."
+}

@@ -1,0 +1,132 @@
+Heathrow Public
+PILZ Project Delivery – Stakeholder Session
+Points of discussion / related actions
+Date: Tuesday, 5 May 2026
+Time: 08:30 – 09:03
+Location: MS Teams
+Chair: Andy Groom
+1. Attendees
+• Andy Groom (Chair)
+• Simon Peddie
+• Matt Davies
+• Fred Tasker
+• Ali Zakaria
+• Gurpreet Banga (DHL, External)
+• Pratik Darjee (Supplier)
+• Russell Wooding
+• Jack Nye (covering for Duncan Byers)
+• Henry Gray
+• Phil Georgiou
+• Fiona Lacey (Supplier)
+• Other delivery and operational stakeholders as per distribution list
+Apologies:
+• Duncan Byers (medical leave)
+2. Purpose of Meeting
+Weekly stakeholder session to review:
+• Delivery performance and schedule
+• Transfers and bag handling
+• HBS and screening performance
+• Risks, mitigations, and forward actions
+3. Delivery Performance & Schedule Review
+3.1 General Progress
+• Mandatory Heathrow five-year electrical testing impacted transfers during the previous
+week. Resources were redeployed to direct lines to maintain productivity.
+
+Heathrow Public
+• No anticipated stoppages for the coming week.
+3.2 Schedule Status (Summary)
+• Programme re-sequenced to prioritise SCA 24 and TRA 74, ahead of Areas 21, 26, 40,
+and 7, to support earlier mitigation release.
+• Area completion status:
+o Area 25: ~95% complete; commissioning at ~80%; final bag test and go-live
+remaining.
+o Area 22: ~95% complete; commissioning underway (~33%).
+o Area 20: ~70% overall.
+o Area 23: ~40% mechanical installation.
+o Areas 264 & 66: ~90–95% complete (minor electrical/mechanical outstanding).
+o Area 265: ~10% mechanical installation (new start).
+3.3 Go-Live Clarification
+• Area 25 go-live confirmed for night of 12 May into the morning of Wednesday 13 May.
+• “Go-live” defined as technical switch from Pilz to Siemens safety system.
+• Operations clarified that this does not constitute BAU recovery; operational constraints
+remain unchanged.
+4. Communications & Operational Risk
+• Strong concern raised regarding the potential misinterpretation of “go-live” messaging
+by operational stakeholders.
+• Agreement that communications must clearly state that operational requirements (e.g.
+zone restrictions, timings) remain unchanged.
+• Risk highlighted that positive messaging could raise unrealistic expectations before
+wider system stabilisation (likely post-summer).
+5. Transfers & Dependency Management
+• Transfers progressing well despite short-term stand-downs last week.
+• Explicit request reiterated:
+o Areas 264 and 265 must not be taken out simultaneously, due to loss of the
+PBA exit route.
+• Historical outages cited where loss of multiple routes resulted in manual bag portering;
+avoidance of repeat scenarios stressed.
+6. Bag Handling Performance
+• Approximately 8,370 bags handled during reporting period.
+• Thursday recorded the highest volumes.
+
+Heathrow Public
+• Minor outages on Lines 222 and 220 resulted in short-duration die-back; recovery
+achieved within ~10 minutes.
+• Temporary bag portering (~301 bags) used to protect collector lines.
+• BA Ops request to clear signage/storage from small room near E1 has been fully
+actioned.
+7. HBS & Screening Performance
+• Belt realignment on Line 222 caused extended outage and journey times up to ~9.5
+minutes.
+• No missed bags attributed to this delay.
+• Data indicates system operating close to capacity; outages propagate rapidly to
+check-in.
+• Stakeholders supported re-introducing structured review of performance data in weekly
+meetings.
+• Request made to explicitly include Level 2 / Level 3 screening capacity within
+reporting, due to its impact on die-back risk.
+8. Forward Look & Key Activities
+8.1 Reclaim 11
+• Planned start date: 8 June 2026.
+• BA staffing numbers and costs largely agreed for Reclaim 11.
+• Confirmed this is a trial / prototype run, limited to Belt 11; future belts to be addressed
+separately.
+8.2 Trials – 21 May
+• Concerns raised around readiness, RTGs, failure modes, and trial start times (03:00 vs
+later).
+• Engagement with Ops and Karis required to align operational constraints with trial
+objectives.
+8.3 SCADA Deployment
+• RTG raised for SCADA deployment covering 6 additional areas.
+• Purpose is to ensure adequate wrap-around support during deployment activities.
+8.4 Screening Contractor (ICTS)
+• Agreement that ICTS must be fully engaged ahead of trials.
+• Any deviation from standard screening operations to be captured and logged as learning
+for future phases.
+9. Resourcing & Cover
+
+Heathrow Public
+• Andrew Groom to be absent until Monday 11 May.
+• Nigel Morgan to deputise during this period.
+10. Actions
+Ref Action Owner
+Issue clear stakeholder comms differentiating project go-live
+A1 Andrew Groom
+from BAU operations
+Andrew Groom / Simon
+A2 Align comms language with BA Ops sensitivities
+Peddie
+A3 Ensure areas 264 & 265 are not isolated concurrently Matt Davies
+Reinstate structured review of performance data in weekly
+A4 Andrew Groom
+agenda
+A5 Include L2/L3 screening capacity in performance reports Fred Tasker
+A6 Engage ICTS ahead of trials and validate resource adequacy Pratik Darjee
+A7 Capture and log ICTS non-standard operations during trials Pratik Darjee
+Andrew Groom / Simon
+A8 Finalise BA staffing and logistics for Reclaim 11
+Peddie
+A9 Set up offline session to confirm Reclaim 11 assumptions Andrew Groom
+A10 Progress RTG and readiness for 21 May trial Russell Wooding
+A11 Share confirmed screening contact details (Dev Patel) Russell Wooding
+11. Date of Next Meeting
+Tuesday, 12 May 2026, at the usual time.

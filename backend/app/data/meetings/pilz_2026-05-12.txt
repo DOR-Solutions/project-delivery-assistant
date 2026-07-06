@@ -1,0 +1,184 @@
+Heathrow Public
+PILZ Project Delivery – Stakeholder Session
+Points of discussion / related actions
+Date: Tuesday, 12 May 2026
+Time: 09:30 – 10:30
+Location: MS Teams
+Chair: Andy Groom
+• Andy Groom (Chair)
+• Simon Peddie
+• Matt Davies
+• Fred Tasker
+• Ali Zakaria
+• Gurpreet Banga (DHL, External)
+• Pratik Darjee (Supplier)
+• Russell Wooding
+• Jack Nye (covering for Duncan Byers)
+• Henry Gray
+• Phil Georgiou
+• Fiona Lacey (Supplier)
+• Other delivery and operational stakeholders as per distribution list
+Apologies:
+• Duncan Byers (medical leave)
+1. Purpose of Meeting
+Weekly stakeholder session to review:
+• Delivery performance and schedule
+• Transfers and bag handling
+• HBS and screening performance
+• Risks, mitigations, and forward actions
+2. Deployment Readiness & Safety Sign-Off
+• RTG against Tipper 0025 outcome confirmed as “No Go” on 12th May 2026.
+• O&M discussions remain ongoing; clarification required on:
+o Shift rotations & training requirements
+• Key dependency: Formal safety sign-off and agreement with HAL BOA
+
+Heathrow Public
+• Agreement that:
+o A single accountable Heathrow authority must confirm safety sign-off
+o Additional meetings will not replace formal accountability
+Risks Identified:
+• Incomplete O&M familiarisation with new guarding infrastructure
+• Operational risk due to lack of early engagement
+Decision:
+• No revised go-live date until:
+o O&M alignment is complete
+o SAT sign-off formally issued
+• NOTE – Formal training and familiarisation has been completed across a number of
+VI / Dalkia shift personnel and SAT passed. BTA 0025 passed ‘Go Live’ on the
+morning of Thursday 14th May 2026.
+3. O&M Engagement & Lessons Learned
+• O&M were involved at design stage but not walked through final installation
+• Recognised as a process gap
+Agreed Improvements:
+• Earlier O&M involvement in:
+o Safety inspections
+o Quality reviews
+• Mandatory pre-RTG familiarisation walkthrough
+4. Project Progress & Area Status
+Strip-out Progress:
+• Area 4: Complete
+• Area 3: ~75% complete
+• Area 2: ~50% complete
+Installation Progress:
+• North Departures: Near completion
+• South Transfers: Near completion
+Testing:
+• BTA 25 SAT: Now Passed
+
+Heathrow Public
+Outstanding:
+• Asset labelling (minor, non-operational impact)
+Clarification:
+• SAT executed at ~95% completion
+• Remaining 5% confirmed as non-critical to operations
+5. Baggage Handling Performance Review
+Incidents:
+• Pick blockage (Triple 2)
+• Motor failure (Zone D collector line)
+Response:
+• Rapid intervention; no isolations required
+• Belt reversal minimised disruption
+Performance Impact:
+• No material impact on journey times
+• Minimal delays observed
+Data Summary:
+• Dieback: Controlled
+• Screening: Stable
+• Only 2 bags not loaded due to operational issues
+Action:
+• Continue monitoring unexplained delays / wayward bags
+6. Mitigation & Wayfinding
+• Positive feedback from BA Ops on mitigation staff
+• Short, targeted deployments during peak periods to continue with ABC personnel
+remaining in post to assist with wayfinding.
+7. RTG Process Breakdown Review
+Issue:
+• Last-minute RTG deemed unacceptable
+Concerns:
+• Breakdown in:
+o Planning
+
+Heathrow Public
+o Communication
+o Governance adherence
+Stakeholder Direction:
+• Future late RTGs will not be supported if not to process and timely
+• Reinforce:
+o Proper sign-off timelines
+o Process discipline
+Agreed Actions:
+• Root cause analysis requested to gain an understanding of any concerns / issues
+• To include:
+o Timeline of events
+o Pressure points
+o Accountability gaps
+8. HBS / Wise Tech Status
+• No HBS machine faults reported
+• One WiseEye issue being resolved at present; awaiting delivery of critical component
+• All other items closed
+9. Key Actions Tracker
+Ref Action Owner Deadline RAG Status
+Confirmed
+Issue O&M status update post-
+A1 Matt as Open
+discussion
+complete
+Complete O&M familiarisation & safety
+A2 Henry 14-05-26 Closed
+sign-off
+Confirm deployment readiness &
+A3 Henry 14-05-26 Closed
+feasible go-live date
+Issue clear stakeholder comms As required
+Andrew Groom /
+A4 differentiating project go-live from BAU OPEN
+Simon Peddie
+operations
+Align comms language with BA Ops Andrew Groom / As required
+A5 OPEN
+sensitivities Simon Peddie
+
+Heathrow Public
+Ensure areas 264 & 265 are not isolated 08-05-26
+A6 Matt Davies CLOSED
+concurrently
+Reinstate structured review of 08-05-26
+A7 Andrew Groom CLOSED
+performance data in weekly agenda
+Include L2/L3 screening capacity in 08-05-26 CLOSED
+A8 Fred Tasker
+performance reports
+Engage ICTS ahead of trials and validate 08-05-26 CLOSED
+A9 Pratik Darjee
+resource adequacy
+Capture and log ICTS non-standard As required OPEN
+A10 Pratik Darjee
+operations during trials
+Finalise BA staffing and logistics for Andrew Groom / 05-06-26 OPEN
+A11
+Reclaim 11 Simon Peddie
+Set up offline session to confirm Reclaim Andrew Groom / 22-05-26 OPEN
+A12
+11 assumptions Simon Peddie
+Progress RTG and readiness for 21 May TBC OPEN
+A13 Russell Wooding
+trial
+Share confirmed screening contact 08-05-26 CLOSED
+A14 Russell Wooding
+details (Dev Patel)
+Overall Assessment (RAG) @ 14th May 2026
+• Deployment Readiness: Green
+(Dependent on O&M sign-off and safety clearance)
+• Project Progress: Green
+(Strong physical progress, minimal outstanding tasks)
+• Operational Performance: Green
+(Incidents well managed, no major service impact)
+• Governance & Process: 🔴 Amber
+(RTG breakdown undergoing investigation and corrective action)
+10. Summary
+• Project delivery is technically strong, but governance and readiness gaps are to be
+closed to ensure deployment is robust.
+• Immediate priority is O&M alignment + formal safety sign-off.
+• Critical lesson: No late-stage RTG decisions without full process compliance.
+Date of Next TEAMS Meeting
+Tuesday, 17th May 2026, 09:30 – 10:30

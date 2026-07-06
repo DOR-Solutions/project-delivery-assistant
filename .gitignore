@@ -1,3 +1,9 @@
+# SQLite database files
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+
 # Logs
 logs
 *.log
@@ -141,3 +147,13 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+maxai.db
+
+# Auto-ingest watched drop-zone (local pilot)
+dropzone/
+backend/dropzone/

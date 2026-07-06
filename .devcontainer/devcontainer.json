@@ -1,0 +1,10 @@
+{
+  "name": "MAX.ai Project Intelligence",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "forwardPorts": [8000, 5173],
+  "portsAttributes": {
+    "5173": { "label": "MAX.ai UI", "onAutoForward": "openPreview" },
+    "8000": { "label": "MAX.ai API", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh"
+}

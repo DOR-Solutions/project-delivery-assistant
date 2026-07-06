@@ -1,0 +1,401 @@
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
+from typing import Any
+from sqlalchemy.orm import Session
+from ..database import get_db
+from .. import models
+from .. import engine
+from .. import actions
+from .. import mfd
+from .. import roster as roster_mod
+from .. import portfolio
+from .. import schedule as schedule_mod
+from .. import ai
+from ..seed import T5_DIRECTS, T5_MITIGATION
+
+router = APIRouter(prefix="/api/ops", tags=["ops"])
+
+
+def _ops_for(project_id: str, db: Session) -> dict:
+    """Unified ops payload for a project. DB risks (if any) override the
+    seeded register so edits persist; otherwise we fall back to portfolio data."""
+    ops = portfolio.get_ops(project_id)
+    if ops is None:
+        raise HTTPException(404, "Unknown project")
+    risks = db.query(models.Risk).filter(models.Risk.project_id == project_id).all()
+    if risks:
+        ops = dict(ops)
+        ops["risks"] = [{"id": r.id, "title": r.title, "area": r.area, "likelihood": r.likelihood,
+                         "impact": r.impact, "mitigation": r.mitigation, "owner": r.owner} for r in risks]
+    return ops
+
+
+def _project_summary(project_id: str, ops: dict) -> dict:
+    meta = ops.get("meta", {})
+    comp = engine.compute_ops(ops)
+    completion = int(meta.get("completion", 0))
+    health = engine.health_for(completion, comp["critical"], comp["open_high"])
+    gates = engine.gate_progress(meta.get("current_gate", "G0"), completion)
+    milestones = meta.get("milestones", [])
+    on_track = len([m for m in milestones if m.get("on_track")])
+    tasks = engine.gen_daily_tasks(ops, comp)
+    return {
+        "project_id": project_id,
+        "name": meta.get("name", project_id),
+        "terminal": meta.get("terminal", ""),
+        "completion": completion,
+        "health": health,
+        "kpis": {
+            "completion": completion,
+            "bags": comp["last"]["actual"],
+            "utilisation": comp["util_pct"],
+            "adherence": comp["adhere_pct"],
+            "open_risks": comp["open_high"],
+            "critical": comp["critical"],
+            "tasks_today": len(tasks),
+            "next_gate": gates["next"],
+        },
+        "milestones": {"on_track": on_track, "total": len(milestones), "items": milestones},
+        "workstreams": meta.get("workstreams", []),
+        "gates": gates,
+        "throughput": [{"date": d["date"], "planned": d.get("planned", 0), "actual": d.get("actual", 0)}
+                       for d in (ops.get("bag_daily") or [])],
+        "tasks": tasks,
+        "risks": comp["risks"],
+        "crew_baseline": meta.get("crew_baseline", 0),
+        "crew_on_shift": meta.get("crew_on_shift", 0),
+    }
+
+
+@router.get("/summary")
+def summary(project_id: str, db: Session = Depends(get_db)):
+    ops = _ops_for(project_id, db)
+    s = _project_summary(project_id, ops)
+    # fold the meeting-driven action register into the project picture
+    reg = actions.register(db, project_id)
+    if reg["total"]:
+        planned = [t for t in reg["tasks"] if t["status"] != "closed"][:6]
+        # combined programme progress: delivery milestones (80%) + action closure (20%)
+        combined = round(s["completion"] * 0.8 + reg["progress_pct"] * 0.2)
+        s["actions"] = {
+            "progress_pct": reg["progress_pct"], "total": reg["total"], "open": reg["open"],
+            "in_progress": reg["in_progress"], "closed": reg["closed"], "overdue": reg["overdue"],
+            "by_owner_type": reg["by_owner_type"], "by_workstream": reg["by_workstream"],
+            "planned": planned,
+        }
+        s["completion_combined"] = combined
+        s["kpis"]["open_actions"] = reg["open"]
+        s["kpis"]["overdue_actions"] = reg["overdue"]
+    return s
+
+
+@router.get("/portfolio")
+def portfolio_overview(db: Session = Depends(get_db)):
+    """Roll-up across every project for the Portfolio view + Dashboard."""
+    out = []
+    for pid in portfolio.PROJECTS_META:
+        ops = _ops_for(pid, db)
+        s = _project_summary(pid, ops)
+        out.append({
+            "project_id": pid, "name": s["name"], "terminal": s["terminal"],
+            "completion": s["completion"], "health": s["health"],
+            "open_risks": s["kpis"]["open_risks"], "critical": s["kpis"]["critical"],
+            "next_gate": s["kpis"]["next_gate"],
+            "risk_count": len(s["risks"]),
+        })
+    rag_counts = {"green": 0, "amber": 0, "red": 0}
+    for p in out:
+        rag_counts[p["health"]["rag"]] += 1
+    avg_completion = round(sum(p["completion"] for p in out) / (len(out) or 1))
+    return {"projects": out, "rag_counts": rag_counts,
+            "avg_completion": avg_completion,
+            "total_open_risks": sum(p["open_risks"] for p in out),
+            "total_critical": sum(p["critical"] for p in out)}
+
+
+class WhatIfIn(BaseModel):
+    project_id: str
+    bag_volume_pct: float = 100
+    crew_on_shift: int = 0
+    extra_completion: int = 0
+
+
+@router.post("/whatif")
+def whatif(body: WhatIfIn, db: Session = Depends(get_db)):
+    ops = _ops_for(body.project_id, db)
+    meta = ops.get("meta", {})
+    comp = engine.compute_ops(ops)
+    crew = body.crew_on_shift or meta.get("crew_on_shift") or meta.get("crew_baseline") or 1
+    return engine.whatif(comp, meta, body.bag_volume_pct, crew, body.extra_completion)
+
+
+@router.get("/foresight")
+def foresight(db: Session = Depends(get_db)):
+    """Cross-portfolio look-ahead: predicted pressure points and synergies."""
+    summaries = {pid: _project_summary(pid, _ops_for(pid, db)) for pid in portfolio.PROJECTS_META}
+    predictions, synergies = [], []
+    for pid, s in summaries.items():
+        crits = [r for r in s["risks"] if r["band"] == "critical"]
+        for r in crits:
+            predictions.append({
+                "project": s["name"], "terminal": s["terminal"],
+                "title": r["title"], "score": r["score"],
+                "forecast": f"Critical exposure (L{r['likelihood']}×I{r['impact']}) — model projects slippage without mitigation.",
+                "owner": r.get("owner", ""),
+            })
+        if s["kpis"]["utilisation"] >= 85:
+            predictions.append({
+                "project": s["name"], "terminal": s["terminal"],
+                "title": "Throughput approaching design capacity",
+                "score": s["kpis"]["utilisation"],
+                "forecast": f"Utilisation {s['kpis']['utilisation']}% — congestion risk on peak days.",
+                "owner": "Operations",
+            })
+        # schedule slippage from the look-ahead
+        la = engine.compute_lookahead(schedule_mod.get_lookahead(pid, portfolio.PROJECTS_META.get(pid, {})))
+        sm = la["summary"]
+        if sm["critical"] or sm["worst_variance"] <= -7:
+            predictions.append({
+                "project": s["name"], "terminal": s["terminal"],
+                "title": "Look-ahead schedule slippage",
+                "score": 10 + sm["critical"] * 3 + abs(min(0, sm["worst_variance"])),
+                "forecast": f"{sm['critical']} critical-path and {sm['slipping']} slipping activities in the 6-week look-ahead "
+                            f"(worst {abs(sm['worst_variance'])}d behind baseline).",
+                "owner": "Planning / VI",
+            })
+    # Synergy detection: projects sharing a risk area / contractor and gate window
+    by_area: dict[str, list] = {}
+    for pid, s in summaries.items():
+        for r in s["risks"]:
+            by_area.setdefault(r["area"], []).append((s["terminal"], s["name"]))
+    for area, members in by_area.items():
+        names = sorted({n for _, n in members})
+        if len(names) >= 2:
+            synergies.append({
+                "area": area, "projects": names,
+                "opportunity": f"{len(names)} projects carry {area} risk — pool resources / share a single mitigation crew and SAT window.",
+            })
+    predictions.sort(key=lambda p: -p["score"])
+    return {"predictions": predictions[:12], "synergies": synergies[:8]}
+
+
+def _docs_for(project_id: str, db: Session) -> list[dict]:
+    rows = db.query(models.Document).filter(models.Document.project_id == project_id).all()
+    return [{"name": d.name, "kind": d.kind, "summary": d.summary or "",
+             "insights": d.insights or [], "text": (d.text or "")[:1500]} for d in rows]
+
+
+def _strategy_context(s: dict, docs: list[dict]) -> str:
+    """Compact, grounded context string for the LLM."""
+    lines = [f"PROJECT: {s['name']} ({s['terminal']}) — {s['completion']}% complete, health {s['health']['label']}.",
+             f"Gate {s['gates']['current']} (next {s['gates']['next']}: {s['gates']['next_label']}).",
+             f"KPIs: utilisation {s['kpis']['utilisation']}%, plan adherence {s['kpis']['adherence']}%, "
+             f"open high risks {s['kpis']['open_risks']}, critical {s['kpis']['critical']}, bags/day {s['kpis']['bags']}.",
+             "WORKSTREAMS: " + ", ".join(f"{w['name']} {w['pct']}%" for w in s["workstreams"]),
+             "RISK REGISTER:"]
+    for r in s["risks"]:
+        lines.append(f"  - [{r['band']} {r['score']}] {r['title']} (area {r.get('area','')}, owner {r.get('owner','')}) "
+                     f"mitigation: {r.get('mitigation','')}")
+    if docs:
+        lines.append("INGESTED DOCUMENTS:")
+        for d in docs:
+            lines.append(f"  • {d['name']} ({d['kind']}): {d['summary']}")
+            for ins in d["insights"][:4]:
+                lines.append(f"      - {ins.get('type','note')}: {ins.get('title','')} — {ins.get('detail','')}")
+    else:
+        lines.append("INGESTED DOCUMENTS: none yet (upload lessons learned, bag-volume data, schematics in Ingest).")
+    return "\n".join(lines)
+
+
+@router.get("/strategy")
+async def strategy(project_id: str, focus: str = "", db: Session = Depends(get_db)):
+    """Synthesise mitigation strategy, predicted risks and a PM to-do list,
+    grounded in the project's risk register, bag data and ingested documents.
+    ``focus`` is an optional PM instruction to steer/narrow the strategy.
+    Uses Claude when available; falls back to the deterministic engine."""
+    ops = _ops_for(project_id, db)
+    comp = engine.compute_ops(ops)
+    docs = _docs_for(project_id, db)
+    forecast = {"directs": engine.forecast_directs(T5_DIRECTS)} if project_id == "t5-baggage-programme" else {}
+    la = engine.compute_lookahead(schedule_mod.get_lookahead(project_id, ops.get("meta", {})))
+    sched_risks = engine.lookahead_risks(la["activities"])
+    base = engine.generate_strategy(ops, comp, docs, forecast, focus=focus, extra_risks=sched_risks)
+
+    s = _project_summary(project_id, ops)
+    enhanced = await ai.ai_strategy(_strategy_context(s, docs), instruction=focus)
+    if enhanced:
+        return {
+            "ai": True,
+            "narrative": enhanced.get("narrative", ""),
+            "objective": enhanced.get("objective") or base["objective"],
+            "mitigation_actions": enhanced.get("mitigation_actions") or base["mitigation_actions"],
+            "fmea": enhanced.get("fmea") or base["fmea"],
+            "access_windows": enhanced.get("access_windows") or base["access_windows"],
+            "approvals": base["approvals"],
+            "command_control": enhanced.get("command_control") or base["command_control"],
+            "contingency": enhanced.get("contingency") or base["contingency"],
+            "predicted_risks": enhanced.get("predicted_risks") or base["predicted_risks"],
+            "todo": enhanced.get("todo") or base["todo"],
+            "inputs": base["inputs"],
+        }
+    return {"ai": False, "narrative": "", **base}
+
+
+class PlanExport(BaseModel):
+    project: str = "Mitigation Plan"
+    objective: str = ""
+    narrative: str = ""
+    mitigation_actions: list[dict] = []
+    fmea: list[dict] = []
+    access_windows: list[dict] = []
+    approvals: list[dict] = []
+    command_control: str = ""
+    contingency: str = ""
+    predicted_risks: list[dict] = []
+    todo: list[dict] = []
+
+
+@router.post("/strategy/pptx")
+def strategy_pptx(plan: PlanExport):
+    """Render the (possibly edited) mitigation plan to a PowerPoint deck."""
+    from .. import pptx_export
+    try:
+        data = pptx_export.build_pptx(plan.model_dump())
+    except ImportError:
+        raise HTTPException(503, "PowerPoint export needs python-pptx installed (re-run ./start.sh to install).")
+    safe = "".join(c if c.isalnum() else "_" for c in plan.project)[:50] or "mitigation_plan"
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="MAX_{safe}_Mitigation_Plan.pptx"'},
+    )
+
+
+@router.get("/lookahead")
+def lookahead(project_id: str, weeks: int = 6, db: Session = Depends(get_db)):
+    """P6-style look-ahead: near-term, <100% activities with float & baseline
+    slippage, grouped by WBS, plus schedule-driven predicted risks."""
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    acts = schedule_mod.get_lookahead(project_id, meta)
+    res = engine.compute_lookahead(acts, weeks=weeks)
+    # group by WBS in computed order
+    groups: list[dict] = []
+    index: dict[str, dict] = {}
+    for a in res["activities"]:
+        g = index.get(a["wbs"])
+        if not g:
+            g = {"wbs": a["wbs"], "activities": []}
+            index[a["wbs"]] = g
+            groups.append(g)
+        g["activities"].append(a)
+    return {"name": meta.get("name", project_id), "summary": res["summary"],
+            "activities": res["activities"], "wbs_groups": groups,
+            "disciplines": schedule_mod.DISCIPLINES,
+            "risks": engine.lookahead_risks(res["activities"])}
+
+
+@router.get("/resources")
+def resources(project_id: str, db: Session = Depends(get_db)):
+    """Resource roster + cost for a project (headcount per supplier with day-rates)."""
+    res = portfolio.get_resources(project_id)
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    sch = portfolio.get_schedule(project_id)
+    weeks = 1
+    if sch:
+        fin = date.fromisoformat(sch[1])
+        weeks = max(1, round((fin - date(2026, 6, 16)).days / 7))
+    out = engine.compute_resources(res or [], weeks)
+    out["name"] = meta.get("name", project_id)
+    out["has_resources"] = bool(res)
+    return out
+
+
+@router.get("/psl")
+def psl(category: str = "", q: str = ""):
+    """Preferred Supplier List — procurement-authorised suppliers by category."""
+    rows = portfolio.PSL
+    if category:
+        rows = [s for s in rows if s["category"] == category]
+    if q:
+        ql = q.lower()
+        rows = [s for s in rows if ql in s["name"].lower() or ql in s["services"].lower() or ql in s["category"].lower()]
+    counts = {c: len([s for s in portfolio.PSL if s["category"] == c]) for c in portfolio.PSL_CATEGORIES}
+    return {"categories": portfolio.PSL_CATEGORIES, "counts": counts, "total": len(portfolio.PSL), "suppliers": rows}
+
+
+@router.get("/synergy")
+def synergy(db: Session = Depends(get_db)):
+    """Cross-project synergies: shared suppliers + schedule overlaps and the
+    recommended saving from combining resource across projects."""
+    items = []
+    for pid, meta in portfolio.PROJECTS_META.items():
+        b = portfolio.get_budget(pid)
+        sch = portfolio.get_schedule(pid)
+        if not b or not sch:
+            continue
+        items.append({"id": pid, "name": meta["name"], "terminal": meta["terminal"],
+                      "suppliers": b["suppliers"], "schedule": sch})
+    return engine.compute_synergies(items)
+
+
+@router.get("/budget")
+def budget(project_id: str, db: Session = Depends(get_db)):
+    """Cost / earned-value view for a project: submitted budget split by
+    supplier, spend-to-date, forecast out-turn and in-budget verdict."""
+    b = portfolio.get_budget(project_id)
+    if not b:
+        meta = portfolio.PROJECTS_META.get(project_id, {})
+        return {"has_budget": False, "name": meta.get("name", project_id)}
+    meta = portfolio.PROJECTS_META.get(project_id, {})
+    # fold the ABC UMP manual-mitigation charge into the T5 out-turn (live from roster)
+    if project_id == "t5-baggage-programme":
+        sup = roster_mod.mitigation_supplier()
+        b = {**b, "suppliers": [*b["suppliers"], sup], "total": b["total"] + sup["budget"]}
+    out = engine.compute_budget(b, int(meta.get("completion", 0)))
+    out["has_budget"] = True
+    out["name"] = meta.get("name", project_id)
+    out["mitigation_included"] = project_id == "t5-baggage-programme"
+    return out
+
+
+@router.get("/roster")
+def roster():
+    """T5 PILZ Mitigation (UMP) roster: deployment plan and cost — KPIs, cost by
+    zone/role, daily staffing & spend, shift bands, top resources, month projection."""
+    return roster_mod.report()
+
+
+@router.get("/mfd/systems")
+def mfd_systems():
+    """List the available baggage-flow systems (T5, T3 InterBag, PT5 TBS)."""
+    return {"systems": mfd.list_systems()}
+
+
+@router.get("/mfd/map")
+def mfd_map(system: str = "t5"):
+    """Material Flow Diagram for a system: nodes (share/status/bags/stage) + edges."""
+    res = mfd.build_map(system)
+    if not res:
+        raise HTTPException(404, "Unknown system")
+    return res
+
+
+@router.get("/mfd/simulate")
+def mfd_simulate(system: str = "t5", areas: str = ""):
+    """Bag-flow loss simulation for one or more lines: lost throughput,
+    re-routing/absorption by parallel lines, residual backlog, downstream impact,
+    mitigation playbook and resources required."""
+    ids = [a for a in areas.split(",") if a]
+    if not ids:
+        raise HTTPException(400, "Provide one or more area ids")
+    res = mfd.simulate(system, ids)
+    if not res:
+        raise HTTPException(404, "Unknown system or areas")
+    return res
+
+
+@router.get("/forecast")
+def forecast(project_id: str):
+    return {"directs": engine.forecast_directs(T5_DIRECTS),
+            "mitigation": engine.forecast_mitigation(T5_MITIGATION)}

@@ -1,0 +1,161 @@
+Heathrow Public
+PILZ Project Delivery – Stakeholder Session
+Points of discussion / related actions
+Date: Tuesday, 19th May 2026
+Time: 09:30 – 10:30
+Location: MS Teams
+Chair: Andy Groom
+• Andy Groom (Chair)
+• Matt Davies
+• Henry Gray
+• Michael Packham
+• Russell Wooding
+• Ali Zakaria
+• Jack Nye
+• Ray Jafri
+• Other delivery and operational stakeholders as per distribution list
+Apologies:
+• Duncan Byers (medical leave)
+1. Purpose of Meeting
+Weekly stakeholder session to review:
+• Delivery performance and schedule
+• Transfers and bag handling
+• HBS and screening performance
+• Risks, mitigations, and forward actions
+2. Stand Down Status
+• Project currently in a stand-down condition.
+• Awaiting formal direction from IRT across both businesses on:
+o Continuation of stand-down
+o Return to normal operations
+• Decision remains a key dependency for all delivery activities.
+3. Project Progress & Area Status
+Live Working Areas:
+• HPA 2023
+• Area 24
+• Areas 264 & 265
+An overview is contained within Figures 1 & 2 below:-
+
+Heathrow Public
+Fig1. Current status of delivery against schedule.
+Fig2. Current % status of M&E delivery against installation and commissioning / ‘Go Live’
+Planned Works:
+• TRA 74 installation scheduled to commence earlier in the week
+• Currently on hold due to stand-down
+Forward Plan:
+• Teams prepared to mobilise immediately upon approval to restart works
+Programme Resequencing:
+• Originally final areas:
+o SCA 74
+o SCA 24
+o TRA 74
+
+Heathrow Public
+• These have been brought forward to:
+o Accelerate delivery
+o Enable early relinquishment of mitigations
+4. Commissioning Control Issue
+Issue Raised:
+• Commissioning activity undertaken the previous evening by VI without appropriate
+authorisation – Henry Gray to investigate the breakdown in communications.
+Concerns:
+• Breakdown in:
+o Controls
+o Communication
+o Governance
+Requirement:
+• Formal review and investigation required internally by VI to ensure no re-occurrence in future.
+5. Baggage Handling Performance Update
+Operational Metrics:
+• Delayed Passenger Baggage count now reduced from ~5,000 to ~4,000
+Assessment:
+• Positive operational improvement
+• System stability improving under constrained conditions
+6. Key Dependency
+• Progress contingent on IRT decision @12:00 on Tuesday 19th May regarding:
+o Stand-down continuation
+o Return to BAU operations
+7. Meeting Close
+• No further questions raised
+• Meeting closed by Andy Groom
+• Minutes to be issued post-meeting
+9. Key Actions Tracker
+Deadline RAG
+Ref Action Owner
+Status
+Confirmed
+A1 Issue O&M status update post-discussion Matt Davies as Closed
+complete
+A2 Complete O&M familiarisation & safety sign-off Henry Gray 14-05-26 Closed
+
+Heathrow Public
+Confirm deployment readiness & feasible go-live
+A3 Henry Gray 14-05-26 Closed
+date
+Issue clear stakeholder comms differentiating Andrew Groom As required
+A4 OPEN
+project go-live from BAU operations / Simon Peddie
+Andrew Groom As required
+A5 Align comms language with BA Ops sensitivities OPEN
+/ Simon Peddie
+Ensure areas 264 & 265 are not isolated 08-05-26
+A6 Matt Davies CLOSED
+concurrently
+Reinstate structured review of performance data 08-05-26
+A7 Andrew Groom CLOSED
+in weekly agenda
+Include L2/L3 screening capacity in performance 08-05-26 CLOSED
+A8 Fred Tasker
+reports
+Engage ICTS ahead of trials and validate resource 08-05-26 CLOSED
+A9 Pratik Darjee
+adequacy
+Capture and log ICTS non-standard operations As required OPEN
+A10 Pratik Darjee
+during trials
+Andrew Groom 05-06-26 OPEN
+A11 Finalise BA staffing and logistics for Reclaim 11
+/ Simon Peddie
+Set up offline session to confirm Reclaim 11 Andrew Groom 22-05-26 OPEN
+A12
+assumptions / Simon Peddie
+Russell TBC OPEN
+A13 Progress RTG and readiness for 21 May trial
+Wooding
+Share confirmed screening contact details (Dev Russell 08-05-26 CLOSED
+A14
+Patel) Wooding
+Confirm stand-down decision and recovery IRT (Both
+A15 ASAP OPEN
+timeline Parties)
+Investigate unauthorised commissioning activity
+A16 Henry Gray 22-05-26 OPEN
+and report any findings
+On stand-
+A17 Confirm mobilisation readiness for TRA 74 works Matt Davies down OPEN
+release
+Continue monitoring baggage volumes and system Operations
+A18 Ongoing OPEN
+performance Team
+Andrew Post-
+A19 Issue meeting minutes and stakeholder comms CLOSED
+Groom meeting
+
+Heathrow Public
+Overall Assessment (RAG)
+• Deployment Readiness: Amber
+(Dependent on IRT decision and resolution of commissioning controls)
+• Project Progress: Green
+(Strong positioning and readiness to restart works)
+• Operational Performance: Green
+(Improving baggage volumes and stable performance)
+• Governance & Process: Red
+(Unauthorised commissioning activity requiring investigation)
+10. Summary
+• Project is operationally stable but constrained by immediate stand-down conditions.
+• Readiness to resume is strong, with re-sequenced programme to be supporting recovery.
+• Key concern remains governance breach relating to commissioning activity.
+• Immediate priority is IRT decision and reinstatement of controlled delivery environment.
+NOTE – Closed Key Actions will be deleted from the Key Actions tracker on a monthly basis.
+Date of Next TEAMS Meeting
+Tuesday, 26th May 2026, 09:30 – 10:30
+Chair to be confirmed to cover Andy Groom’s annual leave absence.
