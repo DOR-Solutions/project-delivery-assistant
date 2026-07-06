@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, Summary, WhatIfOut, RosterSummary } from "../lib/api";
+import { api, Summary, WhatIfOut, RosterSummary, MfdImpactRow } from "../lib/api";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
   Chart, CategoryScale, LinearScale, BarElement, PointElement, LineElement,
@@ -24,6 +24,7 @@ export default function CommandCenter({ pid }: { pid: string }) {
   const [crew, setCrew] = useState(0);
   const [extra, setExtra] = useState(0);
   const [wf, setWf] = useState<WhatIfOut | null>(null);
+  const [mfdRows, setMfdRows] = useState<MfdImpactRow[]>([]);
 
   useEffect(() => {
     setErr(""); setS(null);
@@ -39,6 +40,13 @@ export default function CommandCenter({ pid }: { pid: string }) {
     const t = setTimeout(() => api.whatif(pid, vol, crew, extra).then(setWf).catch(() => {}), 120);
     return () => clearTimeout(t);
   }, [pid, vol, crew, extra, s]);
+
+  useEffect(() => {
+    if (!s) return;
+    api.mfdImpact(pid, "A").then(setMfdRows).catch(() => setMfdRows([]));
+    const id = window.setInterval(() => api.mfdImpact(pid, "A").then(setMfdRows).catch(() => setMfdRows([])), 20000);
+    return () => window.clearInterval(id);
+  }, [pid, s]);
 
   const bandCounts = useMemo(() => {
     const c = { critical: 0, high: 0, medium: 0, low: 0 } as Record<string, number>;
@@ -66,6 +74,12 @@ export default function CommandCenter({ pid }: { pid: string }) {
     <div>
       <div className="eyebrow">Command Center</div>
       <h1><span className="title-star">★</span> {s.name}</h1>
+
+      {mfdRows.some((r) => r.band === "critical") && (
+        <div style={{ background: "#C00000", color: "white", padding: 12, borderRadius: 8, marginBottom: 12, fontWeight: 700 }}>
+          Critical HBS outage exposure detected — open Route & Mitigation for the live playbook.
+        </div>
+      )}
 
       <div className="kpis">
         {kpis.map(([l, v, c, link]) => (

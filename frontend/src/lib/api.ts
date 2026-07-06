@@ -91,6 +91,11 @@ export interface RosterOut { summary: RosterSummary; rate_card: RateCard; by_zon
 export interface MfdSystemInfo { id: string; name: string; terminal: string; lines: number; }
 export interface MfdNode { id: string; name: string; capacity: number; status: string; stage: number; kind: string; share_pct: number; bags: number; }
 export interface MfdMap { id: string; name: string; terminal: string; baseline_bags: number; nodes: MfdNode[]; edges: { from: string; to: string }[]; stages: { stage: number; label: string }[]; }
+export interface MfdImpactRow {
+  node: string; node_id: string; type: string; day_type: string; total_forecast: number;
+  bags_at_risk: number; mitigation_capacity: number; mitigation_detail: string[]; residual_unhandled: number;
+  residual_pct: number; risk_score: number; band: string; playbook: string[]; degraded?: boolean; availability?: number;
+}
 export interface MfdResource { item: string; qty: number; type: string; }
 export interface MfdReroute { id: string; name: string; take: number; new_util: number; was_util: number; }
 export interface MfdPerLine { id: string; name: string; lost_bags: number; absorbed: number; residual: number; mitigation: string[]; }
@@ -198,6 +203,9 @@ export const api = {
     return r.blob();
   },
   roster: () => get<RosterOut>(`/ops/roster`),
+  mfdImpact: (pid?: string, dayType = "A") => get<MfdImpactRow[]>(`/mfd/impact?day_type=${dayType}${pid ? `&project_id=${encodeURIComponent(pid)}` : ""}`),
+  mfdWhatIf: (body: { node_id: string; day_type?: string; total?: number; availability?: number }) => post<any>("/mfd/whatif", body),
+  mfdModel: () => get<any>("/mfd/model"),
   mfdSystems: () => get<{ systems: MfdSystemInfo[] }>(`/ops/mfd/systems`),
   mfdMap: (system: string) => get<MfdMap>(`/ops/mfd/map?system=${system}`),
   mfdSimulate: (system: string, areas: string[]) => get<MfdSim>(`/ops/mfd/simulate?system=${system}&areas=${areas.join(",")}`),

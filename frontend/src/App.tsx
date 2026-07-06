@@ -20,6 +20,7 @@ import Roster from "./views/Roster";
 import Forecast from "./views/Forecast";
 import RiskEngine from "./views/RiskEngine";
 import Chat from "./views/Chat";
+import RouteMitigation from "./views/RouteMitigation";
 
 const ragDot = (rag: string) => ({ green: "#178A43", amber: "#B0720A", red: "#D4374C" }[rag] || "#6B8093");
 
@@ -97,6 +98,7 @@ export default function App() {
             {wsLink("/psl", "📇", "PSL")}
             {wsLink("/forecast", "📈", "Bag Forecast")}
             {wsLink("/risk", "⚠", "Risk Engine")}
+            {wsLink("/mfd", "🛣", "Route & Mitigation")}
             {wsLink("/chat", "◆", "Ask MAX")}
           </nav>
         </div>
@@ -127,6 +129,7 @@ export default function App() {
           <Route path="/psl" element={<PSL />} />
           <Route path="/forecast" element={<Forecast pid={pid} />} />
           <Route path="/risk" element={<RiskEngine pid={pid} />} />
+          <Route path="/mfd" element={<RouteMitigation pid={pid} />} />
           <Route path="/chat" element={<Chat pid={pid} />} />
         </Routes>
       </main>

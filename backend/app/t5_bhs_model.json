@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "source": "Vanderlande MFD BC216 T5 HBS & Asset Replacement (15000-XX-DS-301-000045)",
+    "note": "Capacity shares are planning estimates — validate against design throughput data.",
+    "day_types": {
+      "A": 24000,
+      "B": 22500,
+      "C": 20000
+    },
+    "total_plan": 44000
+  },
+  "hbs": [
+    {
+      "id": "HBS_1_2",
+      "name": "HBS 1/2",
+      "role": "Primary hold-baggage screening — main check-in (Zones A & B)",
+      "feeds_from": [
+        "CI_A",
+        "CI_B",
+        "CI_STAFF",
+        "CI_INT"
+      ],
+      "downstream": [
+        "Central sortation → MCA 11–14, HBA 1–9 / 21–24, laterals A1–A16"
+      ],
+      "share": 0.5,
+      "lines": "Multiple parallel EDS lines (Sort/Merge, 360°/90° reads)",
+      "redundancy": "partial",
+      "cross_to": [
+        "HBS_3"
+      ]
+    },
+    {
+      "id": "HBS_3",
+      "name": "HBS 3 (North + South)",
+      "role": "Screening for Concourse B/C flows, problem bags & make-up laterals C/B/Z",
+      "feeds_from": [
+        "CI_C",
+        "PBA",
+        "CI_LATE"
+      ],
+      "downstream": [
+        "North & South make-up, laterals C1–C16 / B1–B16 / Z1–Z2, PBA 1–6"
+      ],
+      "share": 0.35,
+      "lines": "North HBS 3 + South HBS 3 (9-chute banks)",
+      "redundancy": "partial",
+      "cross_to": [
+        "HBS_1_2",
+        "HBS_1_3"
+      ]
+    },
+    {
+      "id": "HBS_1_3",
+      "name": "HBS 1/3",
+      "role": "Transfer baggage screening (Transfer Baggage System / TBS)",
+      "feeds_from": [
+        "TX_A",
+        "TX_B",
+        "TX_C",
+        "DCV_N"
+      ],
+      "downstream": [
+        "Transfer make-up, Early Bag Store (ISB), re-sortation"
+      ],
+      "share": 0.15,
+      "lines": "Transfer EDS + TBS dump",
+      "redundancy": "low",
+      "cross_to": [
+        "HBS_3"
+      ]
+    },
+    {
+      "id": "OOG_HBS",
+      "name": "OOG HBS",
+      "role": "Out-of-gauge / manual-search screening (odd-size bags)",
+      "feeds_from": [
+        "OOG_IN"
+      ],
+      "downstream": [
+        "OOG make-up / manual load"
+      ],
+      "share": 0.03,
+      "lines": "Manual search lane",
+      "redundancy": "none",
+      "cross_to": []
+    }
+  ],
+  "checkin": [
+    {
+      "id": "CI_A",
+      "name": "Zone A check-in (A1–A16)",
+      "screens_via": "HBS_1_2",
+      "share": 0.28,
+      "note": "16 desks; primary departures flow"
+    },
+    {
+      "id": "CI_B",
+      "name": "Zone B check-in",
+      "screens_via": "HBS_1_2",
+      "share": 0.16,
+      "note": "Desks + Customer Services (14)"
+    },
+    {
+      "id": "CI_C",
+      "name": "Zone C check-in (C1–C16)",
+      "screens_via": "HBS_3",
+      "share": 0.18,
+      "note": "16 desks; Concourse C departures"
+    },
+    {
+      "id": "CI_INT",
+      "name": "Int. Zone check-in (2 desks)",
+      "screens_via": "HBS_1_2",
+      "share": 0.03,
+      "note": "Interline / late acceptance"
+    },
+    {
+      "id": "CI_STAFF",
+      "name": "Staff check-in (2 desks)",
+      "screens_via": "HBS_1_2",
+      "share": 0.02,
+      "note": "Staff travel"
+    },
+    {
+      "id": "CI_LATE",
+      "name": "Late Bag entry",
+      "screens_via": "HBS_3",
+      "share": 0.03,
+      "note": "Late/hot bags, time-critical output"
+    }
+  ],
+  "transfer": [
+    {
+      "id": "TX_A",
+      "name": "TXA 1/2",
+      "screens_via": "HBS_1_3",
+      "share": 0.05,
+      "note": "Transfer from Concourse A stands"
+    },
+    {
+      "id": "TX_B",
+      "name": "TXB 1–4",
+      "screens_via": "HBS_1_3",
+      "share": 0.06,
+      "note": "Transfer from Concourse B (4 lines)"
+    },
+    {
+      "id": "TX_C",
+      "name": "TXC 1/2",
+      "screens_via": "HBS_1_3",
+      "share": 0.03,
+      "note": "Transfer from Concourse C"
+    },
+    {
+      "id": "DCV_N",
+      "name": "DCV North",
+      "screens_via": "HBS_1_3",
+      "share": 0.02,
+      "note": "Destination-coded vehicle feed, North"
+    }
+  ],
+  "levers": {
+    "MIP": {
+      "name": "Manual Injection Points (MIP)",
+      "desc": "Bags hand-loaded onto downstream conveyor to bypass a failed screen/line.",
+      "capacity_per_day": 2900,
+      "speed": "immediate",
+      "note": "Primary contingency; matches recorded FOH/porterage mitigation volumes (~2–2.9k/day)."
+    },
+    "XSCREEN": {
+      "name": "Cross-screening reroute",
+      "desc": "Divert bags from the failed HBS to an adjacent HBS via Sort/Merge cross-links.",
+      "capacity_per_day": 6000,
+      "speed": "minutes",
+      "note": "Only where cross_to link exists; consumes spare capacity on the receiving HBS."
+    },
+    "OOG": {
+      "name": "OOG / manual-search lane",
+      "desc": "Route standard bags through the out-of-gauge manual lane.",
+      "capacity_per_day": 800,
+      "speed": "minutes",
+      "note": "Low throughput; last resort for small residuals."
+    },
+    "EBS": {
+      "name": "Early Bag Store buffering (ISB)",
+      "desc": "Hold bags in ISB/EBS to smooth peaks during partial outage; release when capacity returns.",
+      "capacity_per_day": 4000,
+      "speed": "immediate",
+      "note": "Time-shifts load; does not add screening capacity."
+    },
+    "SHED": {
+      "name": "Check-in throttling / flight hold",
+      "desc": "Slow desk acceptance or hold flights to match reduced screening rate.",
+      "capacity_per_day": 0,
+      "speed": "immediate",
+      "note": "Passenger-impacting; DAY-A last resort. Coordinated with airline & Duty Manager."
+    },
+    "PORTER": {
+      "name": "FOH porterage to stand",
+      "desc": "Direct hand-carry of bags front-of-house to aircraft stand for time-critical flights.",
+      "capacity_per_day": 600,
+      "speed": "immediate",
+      "note": "Labour-intensive; time-critical only."
+    }
+  }
+}
